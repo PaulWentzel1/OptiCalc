@@ -19,7 +19,7 @@ class Pricing:
     def black_76(self):
         ...
 
-    def garman_kohlhagen(self)
+    def garman_kohlhagen(self):
         ...
 
     def binomial_tree(self):

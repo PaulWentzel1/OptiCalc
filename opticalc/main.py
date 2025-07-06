@@ -104,7 +104,7 @@ class Option:
     {"-"*line_length}"""
 
 
-    def _check_european(self, function_name: str) -> None | UnsupportedModelException:
+    def _check_european(self, function_name: str) -> None:
         """
         Verifies whether or not an option has a european-style exercise.
         If no issue is found, the method will return None.
@@ -129,12 +129,145 @@ class Option:
                 f"{function_name} is only usable for European-style options. "
                 f"The current option has a {self.exercise_type}-style exercise")
 
+    def _check_american(self, function_name: str) -> None:
+        """
+        Verifies whether or not an option has a american-style exercise.
+        If no issue is found, the method will return None.
+        
+        Parameters
+        -----------
+        function_name : str
+            The name of the method, for clarity.
+
+        Returns
+        -----------
+        None
+            If the option has a american-style exercise.
+
+        Raises
+        -----------
+        UnsupportedModelException
+            If the option doesn't have a american-style exercise.
+        """
+        if self.exercise_type != "american":
+            raise UnsupportedModelException(
+                f"{function_name} is only usable for American-style options. "
+                f"The current option has a {self.exercise_type}-style exercise")
+
     @property
-    def payoff(self):
+    def payoff(self) -> float:
         if self.option_type == "call":
             return max(self.s - self.k, 0)
         elif self.option_type == "put":
             return max(self.k - self.s, 0)
+
+    @property
+    def available_models(self) -> list[str]:
+        """
+        Returns the available pricing models for a specific option.
+
+        Returns
+        -----------
+        list[str]
+            A list of all valid pricing models.
+        
+        """
+        if self.exercise_type == "european":
+            valid = ["black_scholes", "black_scholes_merton", "black_76", "binomial"]
+            if self.rf is not None:
+                valid.append("garman_kohlhagen")
+            return valid
+        
+        elif self.exercise_type == "american":
+            valid = ["bjerksund_stensland_1993", "binomial"]
+            return valid
+    
+        elif self.exercise_type == "bermuda":
+            valid = [""]    # Placeholder
+            return valid
+        else:
+            raise InvalidOptionExerciseException(f"The option's exercise type '{self.exercise_type}' is not valid.")
+
+    @property
+    def plot(self):
+        ...
+
+    @property
+    def binomial(self):
+        ...
+
+    @property
+    def delta(self):
+        ...
+
+    @property
+    def vega(self):
+        ...
+
+    @property
+    def theta(self):
+        ...
+    
+    @property
+    def rho(self):
+        ...
+    
+    @property
+    def epsilon(self):
+        ...
+    
+    @property
+    def gamma(self):
+        ...
+    
+    @property
+    def vanna(self):
+        ...
+    
+    @property
+    def charm(self):
+        ...
+
+    @property
+    def vomma(self):
+        ...
+
+    @property
+    def vera(self):
+        ...   
+    
+    @property
+    def veta(self):
+        ...
+    
+    @property
+    def speed(self):
+        ...
+
+    @property
+    def zomma(self):
+        ...
+    
+    @property
+    def color(self):
+        ...
+
+    @property
+    def ultima(self):
+        ...
+    
+    @property
+    def first_order_greels(self):
+        ...
+
+    @property
+    def second_order_greeks(self):
+        ...
+
+    @property
+    def third_order_greeks(self):
+        ...
+    #  ^ move down later
 
     def d1(self, b: float) -> float:
         """
@@ -254,7 +387,7 @@ class Option:
         Returns
         -----------
         float
-            The theoretical price of the option.s
+            The theoretical price of the option.
         """
         self._check_european("Garman-Kohlhagen")
         if self.rf is not None:
@@ -263,47 +396,126 @@ class Option:
         else:
             raise ValueError("The foreign interest rate (rf) must be defined.")
 
-    @property
-    def binomial(self):
-        ...
 
-    @property
-    def bjerksund_stensland(self):
-        # 2002 and 1993
-        ...
-    @property
-    def available_models(self) -> list[str]:
+    def _phi(self, b: float, gamma: float, h: float, i: float, s: float, r: float) -> float:
         """
-        Returns the available pricing models for a specific option.
+        Calculate the value of Phi, an important component of the Bjerksund-Stensland model(s)
 
+        Parameters
+        -----------
+        b : float
+            The cost of carry rate, which is determined by the given pricing model.
+        
+        gamma : float
+            ...
+
+        h : float
+            ...    
+        
+        i : float
+            The flat boundary (trigger price) used in the Bjerksund-Stensland model(s)
+        
         Returns
         -----------
-        list[str]
-            A list of all valid pricing models.
-        
+        float
+            The value of phi, used in the Bjerksund-Stensland 1993 and 2002 models
         """
-        if self.exercise_type == "european":
-            valid = ["black_scholes", "black_scholes_merton", "black_76", "binomial"]
-            if self.rf is not None:
-                valid.append("garman_kohlhagen")
-            return valid
+        _lambda = (-r + gamma * b + 0.5 * gamma * (gamma - 1) * self.sigma ** 2) * self.t
+
+        d = -(np.log(s / h) + (b + (gamma - 0.5) * self.sigma ** 2) * self.t) / (self.sigma * np.sqrt(self.t))
+
+        kappa = (2 * b) / (self.sigma ** 2) + (2 * gamma - 1)
+
+        return np.exp(_lambda) * (s ** gamma) * (norm.cdf(d) - (i / s) ** kappa * norm.cdf(d - 2 * np.log(i / s) / (self.sigma * np.sqrt(self.t))))
+
+    def _bjerksund_stensland_call_1993(self, s: float, k: float, r: float, b: float) -> float:
+        """
+        Return the theoretical price of an american call option using the Bjerksund-Stensland approximation model (1993).
+        By changing the inputs, the method returns the theoretical price of a put of same characteristics (Bjerksund-Stendland put-call transformation):
+        P(s, k, t, r, b, sigma) = C(k, s, t, r - b, -b, sigma)
+
+        Parameters
+        -----------
+        s : float
+            The current spot price of the underlying.
+
+        k : float
+            The strike of the option.
+
+        r : float 
+            The risk-free rate.
+
+        b : float 
+            The cost of carry rate.
         
-        elif self.exercise_type == "american":
-            valid = ["binomial"]    # Placeholder
-            return valid
-    
-        elif self.exercise_type == "bermuda":
-            valid = [""]    # Placeholder
-            return valid
+        Returns
+        -----------
+        float
+            The theoretical price of the option.
+        """
+
+        if b >= r:
+            return self._cost_of_carry_black_scholes(b)
+        
         else:
-            raise InvalidOptionExerciseException(f"The option's exercise type '{self.exercise_type}' is not valid.")
+            beta = (1 / 2 - b / self.sigma ** 2) + np.sqrt((b / self.sigma ** 2 - 1 / 2) ** 2 + 2 * r / self.sigma ** 2)
+            b_infinity = beta / (beta - 1) * k
+            b_0 = max(k, r / (r - b) * k)
+            ht = - (b * self.t + 2 * self.sigma * np.sqrt(self.t)) * b_0 / (b_infinity - b_0)
+            i = b_0 + (b_infinity - b_0) * (1 - np.exp(ht))
+
+            if s >= i:
+                # The immediate exercise is more advantageous
+                return self.payoff
+            else:
+                alpha = (i - k) * i ** (-beta)
+            
+                return (alpha * s ** beta
+                    - alpha * self._phi(b = b, gamma = beta, h = i, i = i, s = s, r = r)
+                    + self._phi(b = b, gamma = 1, h = i, i = i, s = s, r = r)
+                    - self._phi(b = b, gamma = 1, h = k, i = i, s = s, r = r)
+                    - k * self._phi(b = b, gamma = 0, h = i, i = i, s = s, r = r)
+                    + k * self._phi(b = b, gamma = 0, h = k, i = i, s = s, r = r))
+                
+    @property
+    def bjerksund_stensland_1993(self) -> float:
+        """
+        Return the theoretical price of an american option using the Bjerksund-Stensland approximation model (1993).
+        Assumes constant volatility, risk-free rate and allows for a continous dividend yield. 
+        While not as accurate as numerical methods like the Binomial pricing model, it is a faster altrnative.
+        
+        Raises
+        -----------
+        InvalidOptionTypeException
+            Raised when the the option type is something else than "call" and "put".
+        
+        Returns
+        -----------
+        float
+            The theoretical price of the option.
+        """
+        b = self.r - self.q
+        self._check_american("bjerksund_stensland_1993")
+        if self.option_type == "call":
+            s = self.s
+            k = self.k
+            r = self.r
+            b = b
+            return self._bjerksund_stensland_call_1993(s, k , r, b)
+            
+        elif self.option_type == "put":
+            # Bjerksund-Stendland put-call transformation
+            s = self.k
+            k = self.s
+            r = self.r - b
+            b = -b
+            return self._bjerksund_stensland_call_1993(s, k , r, b) 
+        else:
+            raise InvalidOptionTypeException("The Option type given is not valid.")
 
     @property
-    def plot(self):
+    def bjerksund_stensland_2002(self) -> float:
         ...
-
-
-
 
 class EuropeanCall(Option):
     def __init__(
@@ -424,11 +636,7 @@ if __name__ == "__main__":
     new_option = Option(stock_price, strike_price, time_to_maturity, risk_free_rate,0, volatility, "call", "american")
     european_call = EuropeanCall(stock_price, strike_price, time_to_maturity, risk_free_rate,0,volatility)
     european_put = EuropeanPut(stock_price, strike_price, time_to_maturity, risk_free_rate,0,volatility)
-    
-    print(f"Available pricing models: {european_call.available_models}")
 
-    print(european_put.payoff)
+    american_put = EuropeanPut(90,100,0.5,0.08,0.12, 0.2)
 
-    european_put.s = 400 # Price of the underlying falls to 400
-    
-    print(european_put.payoff)
+    print(american_put.bjerksund_stensland_1993)

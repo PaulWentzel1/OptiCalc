@@ -1,6 +1,8 @@
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm, multivariate_normal
 from enum import Enum
+from typing import cast
+
 from utils import InvalidOptionTypeException, UnsupportedModelException, InvalidOptionExerciseException
 
 
@@ -397,9 +399,9 @@ class Option:
             raise ValueError("The foreign interest rate (rf) must be defined.")
 
 
-    def _phi(self, b: float, gamma: float, h: float, i: float, s: float, r: float) -> float:
+    def _phi(self, s: float, t: float, gamma: float, h: float, i: float, r: float, b: float) -> float:
         """
-        Calculate the value of Phi, an important component of the Bjerksund-Stensland model(s)
+        Calculate the value of Phi function, an important component of the Bjerksund-Stensland model(s)
 
         Parameters
         -----------
@@ -408,7 +410,7 @@ class Option:
         
         gamma : float
             ...
-
+         (s, t, gamma, h, i, r, b, sigma)
         h : float
             ...    
         
@@ -418,15 +420,110 @@ class Option:
         Returns
         -----------
         float
-            The value of phi, used in the Bjerksund-Stensland 1993 and 2002 models
+            The value of Phi, used in the Bjerksund-Stensland 1993 and 2002 models
         """
-        _lambda = (-r + gamma * b + 0.5 * gamma * (gamma - 1) * self.sigma ** 2) * self.t
+        _lambda = (-r + gamma * b + 0.5 * gamma * (gamma - 1) * self.sigma ** 2) * t
 
-        d = -(np.log(s / h) + (b + (gamma - 0.5) * self.sigma ** 2) * self.t) / (self.sigma * np.sqrt(self.t))
+        d = -(np.log(s / h) + (b + (gamma - 0.5) * self.sigma ** 2) * t) / (self.sigma * np.sqrt(t))
 
         kappa = (2 * b) / (self.sigma ** 2) + (2 * gamma - 1)
 
-        return np.exp(_lambda) * (s ** gamma) * (norm.cdf(d) - (i / s) ** kappa * norm.cdf(d - 2 * np.log(i / s) / (self.sigma * np.sqrt(self.t))))
+        return np.exp(_lambda) * (s ** gamma) * (norm.cdf(d) - (i / s) ** kappa * norm.cdf(d - 2 * np.log(i / s) / (self.sigma * np.sqrt(t))))
+
+    @staticmethod
+    def std_bivariate_normal_cdf(a: float, b: float, rho: float) -> float:
+        """
+        Return the values of the Cumulative Bivariate normal distribution.
+
+        Computes P(x <= a, y <= b) where x & y follows a standardized bivariate 
+        normal distribution with the correlation coefficient rho.
+
+        
+        Parameters
+        -----------
+        a : float
+            Upper limit for first variable.
+
+        b : float
+            Upper limit for second variable.
+
+        rho : float 
+            The correlation between a and b.
+    
+        Returns
+        -----------
+        float
+            The cumulative probability P(x <= a, y <= b).
+        """
+
+
+        mean: list[float] = [0, 0]
+        cov: list[list[float]] = [[1, rho], [rho, 1]]
+
+        return multivariate_normal.cdf([a, b], mean=mean, cov=cov,allow_singular=True)
+
+    def _psi(self, s: float, t2: float, gamma: float, h: float, i2: float, i1: float, t1: float, r: float, b: float) -> float:
+        """
+        Calculate the value of the Psi function, an important component of the Bjerksund-Stensland (2002) model.
+        
+        Parameters
+        -----------
+        s : float
+            The current spot price of the underlying.
+        
+        t2 : float
+            ...
+
+        gamma : float
+            ...
+
+        h : float
+            ...
+
+        i2 : float
+            ...
+
+        i1 : float
+            ...
+
+        t1 : float
+            ...
+
+        b : float
+            The cost of carry rate, which is determined by the given pricing model.
+
+        r : float
+            The risk-free rate.
+            
+        Returns
+        -----------
+        float
+            The value of Psi, used in the Bjerksund-Stensland 2002 model.
+        """
+
+        e1 = (np.log(s/ i1) + (b + (gamma - 0.5) * self.sigma ** 2) * t1 ) / (self.sigma * np.sqrt(t1))
+        e2 = (np.log(i2 ** 2 / (s * i1))  + (b + (gamma - 0.5) * self.sigma ** 2) * t1) / (self.sigma * np.sqrt(t1))
+        e3 = (np.log(s / i1) - (b + (gamma - 0.5) * self.sigma ** 2) *t1) / (self.sigma * np.sqrt(t1))
+        e4 = (np.log(i2 ** 2 / (s * i1)) - (b + (gamma - 0.5) * self.sigma ** 2) * t1) / (self.sigma * np.sqrt(t1))
+
+
+        f1 = (np.log(s / h) + (b + (gamma - 0.5) * self.sigma ** 2) * t2) / (self.sigma * np.sqrt(t2))
+        f2 = (np.log(i2 ** 2 / (s * h)) + (b + (gamma - 0.5) * self.sigma ** 2) * t2) / (self.sigma * np.sqrt(t2))
+        f3 = (np.log(i1 ** 2 / (s * h)) + (b + (gamma - 0.5) * self.sigma ** 2) * t2) / (self.sigma * np.sqrt(t2))
+        f4 = (np.log( (s * i1 ** 2) / (h * i2 ** 2)) + (b + (gamma - 0.5) * self.sigma ** 2) * t2) / (self.sigma * np.sqrt(t2))
+        
+
+        rho = np.sqrt(t1 / t2)
+        _lambda = - r + gamma * b + 0.5 * gamma * (gamma -1) * self.sigma ** 2
+        kappa = (2 * b) / (self.sigma ** 2) + (2 * gamma -1)
+            
+
+        return (np.exp(_lambda * t2) * s ** gamma 
+                * (self.std_bivariate_normal_cdf(-e1, -f1, rho)
+                - (i2 / s) ** kappa * self.std_bivariate_normal_cdf(-e2, -f2, rho)
+                - (i1 / s) ** kappa * self.std_bivariate_normal_cdf(-e3, -f3, -rho)
+                + (i1 / i2) ** kappa * self.std_bivariate_normal_cdf(-e4, -f4, -rho)))
+   
 
     def _bjerksund_stensland_call_1993(self, s: float, k: float, r: float, b: float) -> float:
         """
@@ -471,11 +568,11 @@ class Option:
                 alpha = (i - k) * i ** (-beta)
             
                 return (alpha * s ** beta
-                    - alpha * self._phi(b = b, gamma = beta, h = i, i = i, s = s, r = r)
-                    + self._phi(b = b, gamma = 1, h = i, i = i, s = s, r = r)
-                    - self._phi(b = b, gamma = 1, h = k, i = i, s = s, r = r)
-                    - k * self._phi(b = b, gamma = 0, h = i, i = i, s = s, r = r)
-                    + k * self._phi(b = b, gamma = 0, h = k, i = i, s = s, r = r))
+                    - alpha * self._phi(b = b, gamma = beta, h = i, i = i, s = s, r = r, t = self.t)
+                    + self._phi(b = b, gamma = 1, h = i, i = i, s = s, r = r, t = self.t)
+                    - self._phi(b = b, gamma = 1, h = k, i = i, s = s, r = r, t = self.t)
+                    - k * self._phi(b = b, gamma = 0, h = i, i = i, s = s, r = r, t = self.t)
+                    + k * self._phi(b = b, gamma = 0, h = k, i = i, s = s, r = r, t = self.t))
                 
     @property
     def bjerksund_stensland_1993(self) -> float:
@@ -513,9 +610,100 @@ class Option:
         else:
             raise InvalidOptionTypeException("The Option type given is not valid.")
 
+    def _bjerksund_stensland_call_2002(self, s: float, k: float, r: float, b: float) -> float:
+        """
+        Return the theoretical price of an american call option using the Bjerksund-Stensland approximation model (2002).
+        By changing the inputs, the method returns the theoretical price of a put of same characteristics (Bjerksund-Stendland put-call transformation):
+        P(s, k, t, r, b, sigma) = C(k, s, t, r - b, -b, sigma)
+
+        Parameters
+        -----------
+        s : float
+            The current spot price of the underlying.
+
+        k : float
+            The strike of the option.
+
+        r : float 
+            The risk-free rate.
+
+        b : float 
+            The cost of carry rate.
+        
+        Returns
+        -----------
+        float
+            The theoretical price of the option.
+        """
+
+        if b >= r:
+            return self._cost_of_carry_black_scholes(b)
+        
+        else:
+            t1 = 1 / 2 * (np.sqrt(5) -1) * self.t
+            beta =  (1 / 2 - b / self.sigma ** 2) + np.sqrt((b / self.sigma ** 2 -1/2) ** 2 + 2 * r / self.sigma ** 2)
+            b_infinity = beta / (beta - 1) * k
+            b_0 = max(k, r / (r - b) * k)
+
+            ht1 = -(b * (self.t - t1) + 2 * self.sigma * np.sqrt(self.t - t1)) * k ** 2 / ((b_infinity - b_0) * b_0) # (self.t - t1) follows the original paper, it is a deviatio from Haug's book.
+            ht2 = -(b * self.t + 2 * self.sigma * np.sqrt(self.t)) * k ** 2 / ((b_infinity - b_0) * b_0)
+            i1 = b_0 + (b_infinity - b_0) * (1 - np.exp(ht1))
+            i2 = b_0 + (b_infinity - b_0) * (1 - np.exp(ht2))
+            
+
+            if s >= i2:
+                return s - k
+            else:
+                alpha_1 = (i1 - k) * i1 ** (-beta)
+                alpha_2 = (i2 - k) * i2 ** (-beta)
+
+                return (
+                    alpha_2 * s ** beta    - alpha_2 * self._phi(s=s, t= t1, gamma= beta,h = i2, i = i2, r = r, b = b)
+                    + self._phi(s = s, t = t1, gamma = 1,h = i2, i = i2, r = r, b = b) - self._phi(s = s, t = t1, gamma = 1, h = i1, i = i2, r = r, b = b)
+                    - k * self._phi(s = s, t = t1, gamma = 0, h = i2, i = i2, r = r, b = b) + k * self._phi(s = s, t = t1, gamma = 0, h = i1, i = i2, r = r, b = b)
+                    + alpha_1 * self._phi(s = s, t = t1, gamma = beta, h = i1, i = i2, r = r, b = b) - alpha_1 * self._psi(s = s, t2 = self.t, gamma = beta, h = i1, i2 = i2, i1 = i1, t1 = t1, r = r, b = b)
+                    + self._psi(s = s, t2 = self.t, gamma = 1, h = i1, i2 = i2, i1 = i1, t1 = t1, r = r, b = b) - self._psi(s = s, t2 = self.t, gamma = 1, h = k, i2 = i2, i1 = i1, t1 = t1, r = r, b = b)
+                    - k * self._psi(s = s, t2 = self.t, gamma = 0, h = i1, i2 = i2, i1 = i1, t1 = t1, r = r, b = b) + k * self._psi(s = s, t2 = self.t, gamma = 0, h = k, i2 = i2, i1 = i1, t1 = t1, r = r, b = b)
+                )
+
     @property
     def bjerksund_stensland_2002(self) -> float:
-        ...
+        """
+        Return the theoretical price of an american option using the Bjerksund-Stensland approximation model (2002).
+        Assumes constant volatility, risk-free rate and allows for a continous dividend yield. 
+        While not as accurate as numerical methods like the Binomial pricing model, it is a faster altrnative.
+        
+        Raises
+        -----------
+        InvalidOptionTypeException
+            Raised when the the option type is something else than "call" and "put".
+        
+        Returns
+        -----------
+        float
+            The theoretical price of the option.
+        """
+        
+        b = self.r - self.q
+        self._check_american("bjerksund_stensland_1993")
+        if self.option_type == "call":
+            s = self.s
+            k = self.k
+            r = self.r
+            b = b
+            return self._bjerksund_stensland_call_2002(s, k , r, b)
+            
+        elif self.option_type == "put":
+            # Bjerksund-Stendland put-call transformation
+            s = self.k
+            k = self.s
+            r = self.r - b
+            b = -b
+            return self._bjerksund_stensland_call_2002(s, k , r, b) 
+        else:
+            raise InvalidOptionTypeException("The Option type given is not valid.")
+
+
 
 class EuropeanCall(Option):
     def __init__(
@@ -626,17 +814,22 @@ class Strategy:
         self.options = options
         ...
 
+
 if __name__ == "__main__":
     stock_price = 300
-    strike_price = 450
-    time_to_maturity = 3
+    strike_price = 280
+    time_to_maturity = 0.25
     risk_free_rate = 0.03
-    volatility = 0.15
+    volatility = 0.2
 
     new_option = Option(stock_price, strike_price, time_to_maturity, risk_free_rate,0, volatility, "call", "american")
     european_call = EuropeanCall(stock_price, strike_price, time_to_maturity, risk_free_rate,0,volatility)
-    european_put = EuropeanPut(stock_price, strike_price, time_to_maturity, risk_free_rate,0,volatility)
+    american_put = AmericanPut(stock_price, strike_price, time_to_maturity, risk_free_rate,0,volatility)
 
-    american_put = EuropeanPut(90,100,0.5,0.08,0.12, 0.2)
 
-    print(american_put.bjerksund_stensland_1993)
+
+    print(american_put.bjerksund_stensland_2002)
+
+
+
+

@@ -1,0 +1,16 @@
+class BlackScholesPricing:
+
+    def _cost_of_carry_black_scholes(self):
+        ...
+
+    def black_scholes(self):
+        ...
+
+    def black_scholes_merton(self):
+        ...
+
+    def black_76(self):
+        ...
+
+    def garman_kohlhagen(self):
+        ...

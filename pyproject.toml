@@ -1,0 +1,49 @@
+[project]
+name = "OptiCalc"
+version = "0.1.0"
+description = "A comprehensive and versatile options calculator"
+readme = {file = "README.md", content-type = "text/markdown"}
+#license = {file = "LICENSE"}
+authors = [
+    {name = "Paul Wentzel"}
+]
+
+maintainers = [
+    {name = "Paul Wentzel"}
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Education"
+    "Intended Audience :: Developers",
+    #"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+
+    "Natural Language :: English"
+
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Investment"
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Visualization"
+]
+keywords = ["options", "finance", "derivatives", "black-scholes", "binomial", "greeks","finance", "monte carlo"]
+
+dependencies = [
+    "numpy>=1.22.2",
+    "scipy>=1.16.1",
+]
+requires-python = ">=3.9.10"
+
+[project.urls]
+Repository = "https://github.com/PaulWentzel1/OptiCalc.git"
+Issues = "https://github.com/PaulWentzel1/OptiCalc/issues"
+#Changelog = "https://github.com/PaulWentzel1/OptiCalc/blob/master/CHANGELOG.md"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

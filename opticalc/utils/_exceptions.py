@@ -6,3 +6,9 @@ class InvalidOptionExerciseException(Exception):
 
 class UnsupportedModelException(Exception):
     ...
+
+class InvalidUnderlyingException(Exception):
+    ...
+
+class InvalidDirectionException(Exception):
+    ...

@@ -15,7 +15,7 @@ maintainers = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Financial and Insurance Industry",
-    "Intended Audience :: Education"
+    "Intended Audience :: Education",
     "Intended Audience :: Developers",
     #"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",

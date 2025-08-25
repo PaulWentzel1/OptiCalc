@@ -24,14 +24,14 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 
-    "Natural Language :: English"
+    "Natural Language :: English",
 
     "Topic :: Office/Business :: Financial",
-    "Topic :: Office/Business :: Financial :: Investment"
+    "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Topic :: Scientific/Engineering :: Visualization"
 ]
-keywords = ["options", "finance", "derivatives", "black-scholes", "binomial", "greeks","finance", "monte carlo"]
+keywords = ["options", "finance", "derivatives", "black-scholes", "binomial", "greeks", "finance", "monte carlo", "american option", "european option", "quant", "quant finance", "trading"]
 
 dependencies = [
     "numpy>=1.22.2",

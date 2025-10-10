@@ -6,7 +6,7 @@ from opticalc.pricing.base import PricingBase
 from opticalc.utils.exceptions import InvalidOptionTypeException
 
 
-class BinomialPricing(PricingBase):
+class BaroneAdesiWhaleyPricing(PricingBase):
     def _kc(self, tolerance: float, max_iterations: int) -> float:
         """
         Return the underlying price for american call options above which early exercise is optimal.

@@ -241,7 +241,7 @@ class OptionBase(OptionParams):  #, ABC):
         return self.d1 - self.sigma * np.sqrt(self.t)
 
     @property
-    # TODO # TODO @abstractmethod
+    @abstractmethod
     def intrinsic_value(self) -> float:
         """
         Return the intrinsic value of the option, given the current underlying price.
@@ -264,7 +264,7 @@ class OptionBase(OptionParams):  #, ABC):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
 
-    # TODO # TODO @abstractmethod
+    @abstractmethod
     def intrinsic_value_variable(self, s: float | None = None, k: float | None = None) -> float:
         """
         Return the intrinsic value of the option, given the current underlying price.
@@ -291,7 +291,7 @@ class OptionBase(OptionParams):  #, ABC):
 
 
     @property
-    # TODO # TODO @abstractmethod
+    @abstractmethod
     def extrinsic_value(self) -> float:
         """
         Return the extrinsic value (Time value) of the option, given its intrinsic value.
@@ -312,7 +312,7 @@ class OptionBase(OptionParams):  #, ABC):
         else:
             raise NameError("The option's premium must be defined.")
 
-
+    @abstractmethod
     def profit_at_expiry_variable(self, s: float | None = None, premium: float | None = None, transaction_costs: float | None = None) -> float:
         """
         Return the profit or loss of an option, regardless of exercise type, at expiry.
@@ -350,9 +350,8 @@ class OptionBase(OptionParams):  #, ABC):
         else:
             return premium - self.intrinsic_value_variable(s, self.k) - transaction_costs
 
-
     @property
-    # TODO # TODO @abstractmethod
+    @abstractmethod
     def moneyness(self) -> str:
         """
         Return the option's current level of moneyness in string format.
@@ -372,7 +371,7 @@ class OptionBase(OptionParams):  #, ABC):
             return "Out of the money."
 
     @property
-    # TODO # TODO @abstractmethod
+    @abstractmethod
     def at_the_forward(self) -> bool:
         """
         Return True if the Option is currently at the forward, else False.
@@ -390,7 +389,7 @@ class OptionBase(OptionParams):  #, ABC):
         return abs(self.k - self.s * np.exp(self.b * self.t)) < 1e-5
 
     @property
-    # TODO # TODO @abstractmethod
+    @abstractmethod
     def at_the_forward_underlying(self) -> float:
         """
         Return an approximation of the underlying price where the option will trade at-the-forward.
@@ -403,7 +402,7 @@ class OptionBase(OptionParams):  #, ABC):
         return self.k * np.exp(-self.b * self.t)
 
     @property
-    # TODO # TODO @abstractmethod
+    @abstractmethod
     def at_the_forward_strike(self) -> float:
         """
         Return an approximation of the strike price where the option will trade at-the-forward.
@@ -414,8 +413,3 @@ class OptionBase(OptionParams):  #, ABC):
             The strike price where the option trades at-the-forward.
         """
         return self.s * np.exp(self.b * self.t)
-
-
-if __name__ == "__main__":
-    new = OptionBase(100, 110, 0.25, 0.03, 0.2, 0.1,"call", OptionExerciseStyle.Bermuda,underlying_type = Underlying.Equity, direction = "long", underlying_contracts = 12, rf = 12)
-    print(new)

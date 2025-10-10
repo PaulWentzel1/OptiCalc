@@ -3,7 +3,7 @@ name = "OptiCalc"
 version = "0.1.0"
 description = "A comprehensive and versatile options calculator"
 readme = {file = "README.md", content-type = "text/markdown"}
-#license = {file = "LICENSE"}
+license = {file = "LICENSE"}
 authors = [
     {name = "Paul Wentzel"}
 ]
@@ -17,7 +17,7 @@ classifiers = [
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Education",
     "Intended Audience :: Developers",
-    #"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -31,13 +31,20 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Mathematics",
     "Topic :: Scientific/Engineering :: Visualization"
 ]
-keywords = ["options", "finance", "derivatives", "black-scholes", "binomial", "greeks", "finance", "monte carlo", "american option", "european option", "quant", "quant finance", "trading"]
+keywords = ["options", "finance", "derivatives", "black-scholes", "binomial", "binomial tree" "greeks",
+            "finance", "monte carlo", "american option", "european option", "quant", "quant finance",
+            "trading", "bjerksund stensland"]
 
 dependencies = [
     "numpy>=1.22.2",
     "scipy>=1.16.1",
 ]
 requires-python = ">=3.9.10"
+
+[project.optional-dependencies]
+dev = [
+    "scipy-stubs>=1.16.2.0",
+]
 
 [project.urls]
 Repository = "https://github.com/PaulWentzel1/OptiCalc.git"

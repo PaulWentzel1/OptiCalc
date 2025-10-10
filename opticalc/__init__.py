@@ -1,14 +1,23 @@
 
-from opticalc.main import (
-    Option,
-    AmericanCall,
-    AmericanPut,
-    EuropeanCall,
-    EuropeanPut,
-    Strategy
+from opticalc.core.option import (
+    Option
 )
 
+from opticalc.core.enums import (
+    OptionType,
+    OptionExerciseStyle,
+    Underlying,
+    Direction,
+)
 
 __all__ = [
-    "Option"
+    "Option",
+    "OptionType",
+    "OptionExerciseStyle",
+    "Underlying",
+    "Direction"
 ]
+
+
+
+

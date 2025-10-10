@@ -1,16 +1,89 @@
-class BlackScholesPricing:
+from opticalc.pricing.base import PricingBase
 
-    def _cost_of_carry_black_scholes(self):
-        ...
 
-    def black_scholes(self):
-        ...
+class BlackScholesPricing(PricingBase):
+    def black_scholes_adaptive(self) -> float:
+        """
+        Return the theoretical value of a european option using the Black-Scholes formula.
+        Assumes constant volatility, risk-free rate, and no dividends.
+        This function automatically uses the cost of carry rate associated with the underlying.
 
-    def black_scholes_merton(self):
-        ...
+        Future -> 0
 
-    def black_76(self):
-        ...
+        FX -> r - rf
 
-    def garman_kohlhagen(self):
-        ...
+        Equity, Index -> r - q (r if q is 0)
+
+        Returns
+        -----------
+        float
+            The theoretical option value
+        """
+        return self._cost_of_carry_black_scholes(self.b)
+
+
+    def black_scholes(self) -> float:
+        """
+        Return the theoretical value of a european option using the Black-Scholes formula.
+        Assumes constant volatility, risk-free rate, and no dividends.
+
+        Returns
+        -----------
+        float
+            The theoretical option value
+        """
+        _b = self.r
+        return self._cost_of_carry_black_scholes(_b)
+
+
+    def black_scholes_merton(self) -> float:
+        """
+        Return the theoretical value of a european option using the Black-Scholes-Merton formula.
+        Assumes constant volatility, risk-free rate and a continous dividend yield.
+        Its main applications include the pricing of index options and dividend paying stocks.
+
+        Returns
+        -----------
+        float
+            The theoretical option value
+        """
+        _b = self.r - self.q
+        return self._cost_of_carry_black_scholes(_b)
+
+
+    def black_76(self) -> float:
+        """
+        Return the theoretical value of a european option using the Black formula (Sometimes known as the Black-76 Model).
+        Assumes constant volatility, risk-free rate, and no dividends.
+        Its main application includes the pricing of options on futures, bonds and swaptions, where the underlying has no cost-of-carry.
+
+        Returns
+        -----------
+        float
+            The theoretical option value
+        """
+        _b = 0
+        return self._cost_of_carry_black_scholes(_b)
+
+
+    def garman_kohlhagen(self) -> float:
+        """
+        Return the theoretical value of a european option using the Garman-Kohlhagen formula, which differentiates itself by including two interest rates.
+        Assumes constant volatility, domestic & foreign risk-free rates and no dividends.
+        Its main application includes pricing FX Options.
+
+        Raises
+        -----------
+        ValueError
+            Raised when the foreign interest rate isn't defined
+
+        Returns
+        -----------
+        float
+            The theoretical option value
+        """
+        if self.rf is not None:
+            _b = self.r - self.rf
+            return self._cost_of_carry_black_scholes(_b)
+        else:
+            raise NameError("The foreign interest rate (rf) must be defined.")

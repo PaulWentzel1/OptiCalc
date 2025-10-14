@@ -1,11 +1,18 @@
 from opticalc.core.base import OptionBase
 from opticalc.core.enums import Direction, OptionExerciseStyle, OptionType, Underlying
-from opticalc.pricing.black_scholes_pricing import BlackScholesPricing
+
+from opticalc.core.american_option import AmericanOption
+from opticalc.core.european_option import EuropeanOption
+
+from opticalc.utils.exceptions import InvalidOptionExerciseException
 
 
 class Option(OptionBase):
     """
-    The main option class. Represents a financial option (Gives the holder the right, but not the obligation, to buy/sell the specific underlying asset).
+    A generalized option. The class will change type into a EuropeanOption, AmericanOption etc based on the input given for
+    exercise_style
+    The class represents a financial option (Gives the holder the right, but not the obligation, to buy/sell the specific
+    underlying asset).
 
     Parameters
     -----------
@@ -51,262 +58,101 @@ class Option(OptionBase):
 
     direction: OptionDirection, str or None, default None.
         The direction of the option, if it is sold or bought.
-
-    experimental: bool, default False
-        Used to enter experimental mode, where certain input validations and checks aren't made.
     """
-    def __init__(
-        self,
-        s: float,
-        k: float,
-        t: float,
-        r: float,
-        q: float,
-        sigma: float,
-        option_type: OptionType | str,
-        exercise_style: OptionExerciseStyle | str,
-        b: float | None = None,
-        rf: float | None = None,
-        premium: float | None = None,
-        transaction_costs: float | None = None,
-        underlying_type: Underlying | str | None = None,
-        direction: Direction | str | None = None,
-        underlying_contracts: int | None = None,
-        experimental: bool = False
+    def __new__(
+            cls,
+            s: float,
+            k: float,
+            t: float,
+            r: float,
+            q: float,
+            sigma: float,
+            option_type: OptionType | str,
+            exercise_style: OptionExerciseStyle | str,
+            b: float | None = None,
+            rf: float | None = None,
+            premium: float | None = None,
+            transaction_costs: float | None = None,
+            underlying_type: Underlying | str | None = None,
+            direction: Direction | str | None = None,
+            underlying_contracts: int | None = None,
+            ) -> AmericanOption | EuropeanOption:
+        """
+        Return the option subclass (EuropeanOption, AmericanOption etc) based on exercise_style.
 
-    ) -> None:
-        super().__init__(
-        s = s,
-        k = k,
-        t = t,
-        r = r,
-        q = q,
-        sigma = sigma,
-        option_type = option_type,
-        exercise_style = exercise_style,
-        b = b,
-        rf = rf,
-        premium = premium,
-        transaction_costs = transaction_costs,
-        underlying_type = underlying_type,
-        direction = direction,
-        underlying_contracts = underlying_contracts,
-        experimental = experimental
-    )
+        Raises
+        -----------
+        InvalidOptionExerciseException
+            Raised if the option's exercise is invalid.
+
+        Returns
+        -----------
+        AmericanOption or EuropeanOption
+            The appropriate option subclass.
+        """
+        if isinstance(exercise_style, OptionExerciseStyle):
+            style_str = exercise_style.value.lower()
+        else:
+            style_str = str(exercise_style).lower()
+
+        if style_str == "american":
+            return AmericanOption(
+                s=s,
+                k=k,
+                t=t,
+                r=r,
+                q=q,
+                sigma=sigma,
+                option_type=option_type,
+                b=b,
+                rf=rf,
+                premium=premium,
+                transaction_costs=transaction_costs,
+                underlying_type=underlying_type,
+                direction=direction,
+                underlying_contracts=underlying_contracts,
+            )
+        elif style_str == "european":
+            return EuropeanOption(
+                s=s,
+                k=k,
+                t=t,
+                r=r,
+                q=q,
+                sigma=sigma,
+                option_type=option_type,
+                b=b,
+                rf=rf,
+                premium=premium,
+                transaction_costs=transaction_costs,
+                underlying_type=underlying_type,
+                direction=direction,
+                underlying_contracts=underlying_contracts,
+            )
+        else:
+            raise InvalidOptionExerciseException(f"Invalid input '{exercise_style}'. Valid inputs for exercise_style"
+                                                 f" are: {[element.value for element in OptionExerciseStyle]}")
 
     @property
-    def black_scholes(self) -> float:
-        engine = BlackScholesPricing(self)
-        return engine.black_scholes_merton()
+    def intrinsic_value(self) -> float: ...
 
+    def intrinsic_value_variable(self, s: float | None = None, k: float | None = None) -> float: ...
 
+    @property
+    def extrinsic_value(self) -> float: ...
 
-if __name__ == "__main__":
-    new = Option(1,2,3,4,5,6,OptionType.Call,OptionExerciseStyle.American,underlying_type= Underlying.Equity)
+    def profit_at_expiry_variable(self, s: float | None = None,
+                                  premium: float | None = None,
+                                  transaction_costs: float | None = None) -> float: ...
 
-from typing import Any
+    @property
+    def moneyness(self) -> str: ...
 
-from opticalc.core.params import OptionParams
+    @property
+    def at_the_forward(self) -> bool: ...
 
+    @property
+    def at_the_forward_underlying(self) -> float: ...
 
-def cache_option_params(option: OptionParams) -> dict[str, Any]:
-    """Helper to extract commonly used parameters for caching"""
-    return {
-        's': option.s,
-        'k': option.k,
-        't': option.t,
-        'r': option.r,
-        'q': option.q,
-        'sigma': option.sigma,
-        'option_type': option.option_type
-    }
-
-# class BlackScholesPricing:
-#     """Black-Scholes pricing model with cached parameters for performance"""
-#     def __init__(self, option: OptionParams):
-#         self.option = option
-#         # Cache common parameters in one line
-#         self.__dict__.update(cache_option_params(option))
-
-#     def __getattr__(self, name: str):
-#         """Fallback for uncommon parameters"""
-#         if hasattr(self.option, name):
-#             return getattr(self.option, name)
-#         raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
-
-#     @property
-#     def black_scholes_merton(self):
-#         # Fast access to cached parameters!
-#         return self.s * self.k  # Invalid, just for testing
-
-
-#     def delta(self):
-#         return 0.5 * self.sigma  # Fast access
-
-
-#     def gamma(self):
-#         return self.k / self.s  # Fast access
-
-
-
-# class ImpliedVolatility:
-#     """Implied volatility calculator with cached parameters for performance"""
-#     def __init__(self, option: OptionParams):
-#         self.option = option
-#         # Cache common parameters in one line
-#         self.__dict__.update(cache_option_params(option))
-
-
-#     def __getattr__(self, name: str):
-#         """Fallback for uncommon parameters"""
-#         if hasattr(self.option, name):
-#             return getattr(self.option, name)
-#         raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
-
-
-#     def implied_vol(self, market_price: float):
-#         # Fast parameter access
-#         base_vol = 0.20 if self.option_type == OptionType.Call else 0.25
-#         return base_vol * (market_price / self.s)
-
-
-
-
-# class EuropeanOption(OptionBase):
-#     """A European-exercise style option with lazy-loaded pricing models"""
-#     def __init__(
-#         self,
-#         s: float,
-#         k: float,
-#         t: float,
-#         r: float,
-#         q: float,
-#         sigma: float,
-#         option_type: OptionType | str,
-#         b: float | None = None,
-#         rf: float | None = None,
-#         premium: float | None = None,
-#         transaction_costs: float | None = None,
-#         underlying_type: Underlying | str | None = None,
-#         direction: Direction | str | None = None,
-#     ) -> None:
-
-#         super().__init__(
-#             s=s,
-#             k=k,
-#             t=t,
-#             r=r,
-#             q=q,
-#             sigma=sigma,
-#             option_type=option_type,
-#             exercise_style=OptionExerciseStyle.European,
-#             b=b,
-#             rf=rf,
-#             premium=premium,
-#             transaction_costs=transaction_costs,
-#             underlying_type=underlying_type,
-#             direction=direction,
-#             experimental=False
-#         )
-
-#         # Lazy-loaded pricing models (created only when accessed)
-#         self._bs_model = None
-#         self._binomial_model = None
-#         self._iv_model = None
-
-#     @property
-#     def bs(self) -> BlackScholesPricing:
-#         """Lazy-loaded Black-Scholes model"""
-#         if self._bs_model is None:
-#             self._bs_model = BlackScholesPricing(self)
-#         return self._bs_model
-
-#     @property
-#     def binomial(self) -> "BinomialPricing":
-#         """Lazy-loaded Binomial model"""
-#         if self._binomial_model is None:
-#             self._binomial_model = BinomialPricing(self)
-#         return self._binomial_model
-
-#     @property
-#     def iv(self) -> ImpliedVolatility:
-#         """Lazy-loaded Implied Volatility model"""
-#         if self._iv_model is None:
-#             self._iv_model = ImpliedVolatility(self)
-#         return self._iv_model
-
-#     # Convenient direct access to commonly used methods
-#     @property
-#     def black_scholes_merton(self):
-#         """Direct access to Black-Scholes price"""
-#         return self.bs.black_scholes_merton
-
-#     @property
-#     def delta(self):
-#         """Direct access to delta"""
-#         return self.bs.delta()
-
-#     def binomial_price(self, steps: int = 100):
-#         """Direct access to binomial price"""
-#         return self.binomial.binomial_price(steps)
-
-#     def implied_vol(self, market_price: float):
-#         """Direct access to implied volatility"""
-#         return self.iv.implied_vol(market_price)
-
-
-# class AmericanOption(OptionBase):
-#     """American option with binomial and implied volatility models"""
-
-#     def __init__(
-#         self,
-#         s: float,
-#         k: float,
-#         t: float,
-#         r: float,
-#         q: float,
-#         sigma: float,
-#         option_type: OptionType | str,
-#         b: float | None = None,
-#         rf: float | None = None,
-#         premium: float | None = None,
-#         transaction_costs: float | None = None,
-#         underlying_type: Underlying | str | None = None,
-#         direction: Direction | str | None = None,
-#     ) -> None:
-#         super().__init__(
-#             s=s,
-#             k=k,
-#             t=t,
-#             r=r,
-#             q=q,
-#             sigma=sigma,
-#             option_type=option_type,
-#             exercise_style=OptionExerciseStyle.American,
-#             b=b,
-#             rf=rf,
-#             premium=premium,
-#             transaction_costs=transaction_costs,
-#             underlying_type=underlying_type,
-#             direction=direction,
-#             experimental=False
-#         )
-
-#         self._binomial_model = None
-#         self._iv_model = None
-
-#     @property
-#     def binomial(self) -> BinomialPricing:
-#         if self._binomial_model is None:
-#             self._binomial_model = BinomialPricing(self)
-#         return self._binomial_model
-
-#     @property
-#     def iv(self) -> ImpliedVolatility:
-#         if self._iv_model is None:
-#             self._iv_model = ImpliedVolatility(self)
-#         return self._iv_model
-
-#     def price(self, steps: int = 100):
-#         """American options typically use binomial pricing"""
-#         return self.binomial.binomial_price(steps)
+    @property
+    def at_the_forward_strike(self) -> float: ...

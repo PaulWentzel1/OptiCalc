@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm  # type: ignore
 
 from opticalc.core.enums import OptionType
 from opticalc.pricing.base import PricingBase
@@ -29,22 +29,23 @@ class BaroneAdesiWhaleyPricing(PricingBase):
         m = 2 * self.r / self.sigma ** 2
         q2u = (-(n - 1) + np.sqrt((n - 1) ** 2 + 4 * m)) / 2
         su = self.k / (1 - 1 / q2u)
-        h2 = - (self.b * self.t + 2 * self.sigma * np.sqrt(self.t)) * self.k /(su - self.k)
+        h2 = - (self.b * self.t + 2 * self.sigma * np.sqrt(self.t)) * self.k / (su - self.k)
         si = self.k + (su - self.k) * (1 - np.exp(h2))
         k = 2 * self.r / (self.sigma ** 2 * (1 - np.exp(-self.r * self.t)))
         d1 = (np.log(si / self.k) + (self.b + self.sigma ** 2 / 2) * self.t) / (self.sigma * np.sqrt(self.t))
         q2 = (-(n - 1) + np.sqrt((n - 1) ** 2 + 4 * k)) / 2
-
         lhs: float = si - self.k
-        rhs: float = self._parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Call) + (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1)) * si / q2
-        bi = np.exp((self.b - self.r) * self.t) * norm.cdf(d1) * (1 - 1 / q2) + (1 - np.exp((self.b - self.r) * self.t) * norm.pdf(d1) / (self.sigma * np.sqrt(self.t))) / q2
+        rhs: float = (_parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Call) + (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1)) * si / q2)
+        bi = (np.exp((self.b - self.r) * self.t) * norm.cdf(d1) * (1 - 1 / q2)
+              + (1 - np.exp((self.b - self.r) * self.t) * norm.pdf(d1) / (self.sigma * np.sqrt(self.t))) / q2)
 
         while abs(float(lhs - rhs)) / self.k > tolerance:
             si = (self.k + rhs - bi * si) / (1 - bi)
             d1 = (np.log(si / self.k) + (self.b + self.sigma**2 / 2) * self.t) / (self.sigma * np.sqrt(self.t))
             lhs = si - self.k
-            rhs = self._parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Call) + (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1)) * si / q2
-            bi = np.exp((self.b - self.r) * self.t) * norm.cdf(d1) * (1- 1 / q2) + (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1) / (self.sigma * np.sqrt(self.t))) / q2
+            rhs = (_parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Call) + (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1)) * si / q2)
+            bi = (np.exp((self.b - self.r) * self.t) * norm.cdf(d1) * (1 - 1 / q2)
+                  + (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1) / (self.sigma * np.sqrt(self.t))) / q2)
 
             max_iterations -= 1
 
@@ -82,15 +83,23 @@ class BaroneAdesiWhaleyPricing(PricingBase):
         q1 = (-(n - 1) - np.sqrt((n - 1) ** 2 + 4 * k)) / 2
 
         lhs = self.k - si
-        rhs = self._parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Put) - (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(-d1)) * si / q1
-        bi = -np.exp((self.b - self.r) * self.t) * norm.cdf(-1 * d1) * (1 - 1 / q1) - (1 + np.exp((self.b - self.r) * self.t) * norm.pdf(-d1) / (self.sigma * np.sqrt(self.t))) / q1
+        rhs = (_parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Put)
+               - (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(-d1))
+               * si / q1)
+
+        bi = (- np.exp((self.b - self.r) * self.t) * norm.cdf(-1 * d1) * (1 - 1 / q1)
+              - (1 + np.exp((self.b - self.r) * self.t) * norm.pdf(-d1) / (self.sigma * np.sqrt(self.t))) / q1)
 
         while abs(lhs - rhs) / self.k > tolerance:
             si = (self.k - rhs + bi * si) / (1 + bi)
             d1 = (np.log(si / self.k) + (self.b + self.sigma**2 / 2) * self.t) / (self.sigma * np.sqrt(self.t))
             lhs = self.k - si
-            rhs =  self._parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Put) - (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(-d1)) * si / q1
-            bi = -np.exp((self.b - self.r) * self.t) * norm.cdf(-d1) * (1 - 1 / q1) - (1 + np.exp((self.b - self.r) * self.t) * norm.cdf(-d1) / (self.sigma * np.sqrt(self.t))) / q1
+            rhs = (_parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Put)
+                   - (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(-d1)) * si / q1)
+            bi = (- np.exp((self.b - self.r) * self.t)
+                  * norm.cdf(-d1)
+                  * (1 - 1 / q1)
+                  - (1 + np.exp((self.b - self.r) * self.t) * norm.cdf(-d1) / (self.sigma * np.sqrt(self.t))) / q1)
 
             max_iterations -= 1
 
@@ -118,7 +127,7 @@ class BaroneAdesiWhaleyPricing(PricingBase):
         """
 
         if self.b >= self.r:
-            return self._cost_of_carry_black_scholes(self.b)
+            return self.black_scholes_cost_of_carry(self.b)
 
         else:
             sk = self._kc(tolerance, max_iterations)
@@ -126,13 +135,12 @@ class BaroneAdesiWhaleyPricing(PricingBase):
                 n = 2 * self.b / self.sigma ** 2
                 k = 2 * self.r / (self.sigma ** 2 * (1 - np.exp(-self.r * self.t)))
                 d1 = (np.log(sk / self.k) + (self.b + self.sigma ** 2 / 2) * self.t) / (self.sigma * np.sqrt(self.t))
-                q2 = (-(n -1) + np.sqrt((n -1) ** 2 + 4 * k)) / 2
+                q2 = (-(n - 1) + np.sqrt((n - 1) ** 2 + 4 * k)) / 2
                 a2 = (sk / q2) * (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1))
 
-                return self._cost_of_carry_black_scholes(self.b) + a2 * (self.s /sk) ** q2
+                return self.black_scholes_cost_of_carry(self.b) + a2 * (self.s / sk) ** q2
             else:
                 return max(self.s - self.k, 0)
-
 
     def _barone_adesi_whaley_put(self, tolerance: float = 1e-10, max_iterations: int = 250) -> float:
         """
@@ -161,7 +169,7 @@ class BaroneAdesiWhaleyPricing(PricingBase):
             d1 = (np.log(sk / self.k) + (self.b + self.sigma ** 2 / 2) * self.t) / (self.sigma * np.sqrt(self.t))
             a1 = -(sk / q1) * (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(-d1))
 
-            return self._cost_of_carry_black_scholes(self.b) + a1 * (self.s / sk)  ** q1
+            return self.black_scholes_cost_of_carry(self.b) + a1 * (self.s / sk) ** q1
         else:
 
             return max(self.k - self.s, 0)
@@ -170,7 +178,8 @@ class BaroneAdesiWhaleyPricing(PricingBase):
         """
         Return the theoretical value of an option using the Barone-Adesi and Whaley approximation method.
 
-        The method gives a closed-form approximation for american option prices by finding the optimal early exercise boundary and computing the option value.
+        The method gives a closed-form approximation for american option prices by finding the optimal early exercise
+        boundary and computing the option value.
 
         Raises
         -----------
@@ -190,3 +199,54 @@ class BaroneAdesiWhaleyPricing(PricingBase):
             return self._barone_adesi_whaley_put()
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
+
+
+def _parameterized_cost_of_carry_black_scholes(s: float, k: float, t: float, r: float, b: float, sigma: float,
+                                               option_type: OptionType) -> float:
+    """
+    Return the theoretical price of a european option using a generalized Black-Scholes Formula with the cost of carry b.
+    This method doesn't use any instance attributes, rather it relies on method parameters for input.
+
+    Parameters
+    -----------
+    s : float
+        The current spot price of the underlying.
+
+    k : float
+        The strike of the option.
+
+    t : float
+        The time left until the option expires.
+
+    r : float
+        The risk-free rate.
+
+    b : float
+        The cost of carry rate.
+
+    sigma : float
+        The volatility of the underlying.
+
+    option_type : OptionType
+        The Option type. Valid: OptionType.Call, OptionType.Put
+
+    Returns
+    -----------
+    float
+        The theoretical price of the option based on the given cost of carry of from a model.
+
+    Raises
+    -----------
+    InvalidOptionTypeException
+        Raised when the option type is something else than "call" and "put".
+    """
+
+    d1 = (np.log(s / k) + (b + sigma ** 2 / 2) * t) / (sigma * np.sqrt(t))
+    d2 = d1 - sigma * np.sqrt(t)
+
+    if option_type == OptionType.Call:
+        return s * norm.cdf(d1) * np.exp((b - r) * t) - k * np.exp(-r * t) * norm.cdf(d2)
+    elif option_type == OptionType.Put:
+        return k * np.exp(-r * t) * norm.cdf(-d2) - s * np.exp((b - r) * t) * norm.cdf(-d1)
+    else:
+        raise InvalidOptionTypeException("The Option type is not valid.")

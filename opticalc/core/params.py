@@ -14,14 +14,13 @@ class OptionParams:
     sigma: float
     option_type: OptionType | str
     exercise_style: OptionExerciseStyle | str
-    _override_b: float | None = field(repr= False) # | None = None
+    _override_b: float | None = field(repr=False)
     rf: float | None = None
     premium: float | None = None
     transaction_costs: float | None = None
     underlying_type: Underlying | str | None = None
     direction: Direction | str | None = None
     underlying_contracts: int | None = None
-    experimental: bool = False
 
     def __init__(
         self,
@@ -40,7 +39,6 @@ class OptionParams:
         underlying_type: Underlying | str | None = None,
         direction: Direction | str | None = None,
         underlying_contracts: int | None = None,
-        experimental: bool = False
     ) -> None:
         self.s = s
         self.k = k
@@ -57,7 +55,6 @@ class OptionParams:
         self.underlying_type = underlying_type
         self.direction = direction
         self.underlying_contracts = underlying_contracts
-        self.experimental = experimental
 
     def get_b(self) -> float | None:
         return self._override_b
@@ -76,10 +73,9 @@ class OptionParams:
             elif self.underlying_type == Underlying.FX:
                 if self.rf is None:
                     raise NameError("The foreign interest rate (rf) must be defined.")
-                return self.r - self.rf # fx options
+                return self.r - self.rf  # fx options
             else:
-                return self.r - self.q # equity, index, commodity (spot) options
-
+                return self.r - self.q  # equity, index, commodity (spot) options
 
     def modify_cost_of_carry(self, b: float | None = None) -> None:
         """

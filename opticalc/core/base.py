@@ -5,14 +5,14 @@ import numpy as np
 
 from opticalc.core.enums import Direction, OptionExerciseStyle, OptionType, Underlying
 from opticalc.core.params import OptionParams
+from opticalc.core.constants import ATM_THRESHOLD, AT_FORWARD_THRESHOLD
 from opticalc.utils.exceptions import (InvalidDirectionException,
                                        InvalidOptionExerciseException,
                                        InvalidOptionTypeException,
-                                       InvalidUnderlyingException,
-                                       UnsupportedModelException)
+                                       InvalidUnderlyingException)
 
 
-class OptionBase(OptionParams):  #, ABC):
+class OptionBase(OptionParams, ABC):
     """Core methods with validation and cost of carry logic"""
 
     def __init__(self, *args: Any, **kwargs: Any):
@@ -20,13 +20,9 @@ class OptionBase(OptionParams):  #, ABC):
 
         # Input validation and processing
         self._process_and_validate_inputs()
-        if not self.experimental:
-            self._validate_inputs()
-
 
     def __repr__(self) -> str:
-       print("DEBUG:", type(self), self.__class__)
-       return f"{self.__class__.__name__}(s={self.s}, k={self.k}, t={self.t}, r={self.r}, q={self.q}, sigma={self.sigma}, option_type={self.option_type}, exercise_style={self.exercise_style}, b={self.b}, rf={self.rf}, premium={self.premium},transaction_costs={self.transaction_costs}, underlying_type={self.underlying_type}, direction={self.direction}, experimental={self.experimental})"
+        return f"{self.__class__.__name__}(s={self.s}, k={self.k}, t={self.t}, r={self.r}, q={self.q}, sigma={self.sigma}, option_type={self.option_type}, exercise_style={self.exercise_style}, b={self.b}, rf={self.rf}, premium={self.premium},transaction_costs={self.transaction_costs}, underlying_type={self.underlying_type}, direction={self.direction})"
 
     def __str__(self) -> str:
         """
@@ -41,11 +37,11 @@ class OptionBase(OptionParams):  #, ABC):
         _option_direction = str(self.direction.value) + " " if isinstance(self.direction, Direction) else ""
         _exercise = self.exercise_style.value if isinstance(self.exercise_style, OptionExerciseStyle) else self.exercise_style
         _type = self.option_type.value if isinstance(self.option_type, OptionType) else self.option_type
-        _contracts = f" with {str(self.underlying_contracts)} underlying contracts."  if self.underlying_contracts != None else "."
-        _underlying = f"The option's underlying is of type {self.underlying_type.value if isinstance(self.underlying_type, Underlying) else self.underlying_type}.\n" if self.underlying_type != None else ""
-        _rf = f"Interest rate (foreign): {str(self.rf)}\n" if self.rf != None else ""
-        _premium = f"The option currently trades at a premium of {self.premium}" if self.premium != None else ""
-        _transaction = f"The transaction costs associated with trading: {self.transaction_costs}" if self.transaction_costs != None else ""
+        _contracts = f" with {str(self.underlying_contracts)} underlying contracts." if self.underlying_contracts is not None else "."
+        _underlying = f"The option's underlying is of type {self.underlying_type.value if isinstance(self.underlying_type, Underlying) else self.underlying_type}.\n" if self.underlying_type is not None else ""
+        _rf = f"Interest rate (foreign): {str(self.rf)}\n" if self.rf is not None else ""
+        _premium = f"The option currently trades at a premium of {self.premium}" if self.premium is not None else ""
+        _transaction = f"The transaction costs associated with trading: {self.transaction_costs}" if self.transaction_costs is not None else ""
 
         return (
             f"This is a {_option_direction}{_exercise}-style {_type} option{_contracts}\n"
@@ -62,19 +58,31 @@ class OptionBase(OptionParams):  #, ABC):
             f"{_transaction}"
         )
 
-
     def _process_and_validate_inputs(self) -> None:
         """
-        Process inputs, convert to enums if necessary and perform validation checks.
+        Validates specific inputs of an option and converts some to enums if necessary.
+        The method validates the underlying price, strike, time to expiry, volatility type, exercise, underlying, direction,
 
-        Raises:
-            InvalidOptionTypeException: _description_
-            InvalidOptionExerciseException: _description
-            InvalidUnderlyingException: _description_
-            InvalidDirectionException: _description_
-            NameError: _description_
+        Raises
+        -----------
+        InvalidOptionTypeException
+            Raised if the option's type is invalid.
+
+        InvalidOptionExerciseException
+            Raised if the option's exercise is invalid.
+
+        InvalidUnderlyingException
+            Raised if the option's underlying asset is invalid.
+
+        InvalidDirectionException
+            Raised if the option's direction is invalid.
+
+        NameError
+            Raised if a specific variable is not defined or is None. (In this case if the Underlying is FX and rf is None).
+
+        ValueError
+            Raised if any of the inputs seem unreasonable or would result in faulty calculations.
         """
-
 
         # Input validation for option_type
         if isinstance(self.option_type, str):
@@ -89,11 +97,11 @@ class OptionBase(OptionParams):  #, ABC):
             try:
                 self.exercise_style = OptionExerciseStyle(self.exercise_style.lower())
             except ValueError as e:
-               raise InvalidOptionExerciseException(f"Invalid input '{self.exercise_style}'. Valid inputs for exercise_style"
-                                                    f" are: {[element.value for element in OptionExerciseStyle]}") from e
+                raise InvalidOptionExerciseException(f"Invalid input '{self.exercise_style}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in OptionExerciseStyle]}") from e
 
         # Input validation for underlying_type
-        if self.underlying_type is not None: # type: ignore
+        if self.underlying_type is not None:
             if isinstance(self.underlying_type, str):
                 try:
                     self.underlying_type = Underlying(self.underlying_type.lower())
@@ -103,7 +111,7 @@ class OptionBase(OptionParams):  #, ABC):
                                                      f"{[element.value for element in Underlying]}") from e
 
         # Input validation for direction
-        if self.direction is not None: # type: ignore
+        if self.direction is not None:
             if isinstance(self.direction, str):
                 try:
                     self.direction = Direction(self.direction.lower())
@@ -116,17 +124,6 @@ class OptionBase(OptionParams):  #, ABC):
             if not self.rf:
                 raise NameError("The foreign interest rate (rf) must be defined for FX Options.")
 
-    def _validate_inputs(self) -> None:
-        """
-        Used to validate specific inputs of an option.
-        The method validates the underlying price, strike, time to expiry and volatility.
-
-        Raises
-        -----------
-        ValueError
-            If any of the inputs seem unreasonable or would result in faulty calculations.
-        """
-
         if self.s <= 0:
             raise ValueError(f"The underlying's price cannot be negative. Input was {self.s}.")
 
@@ -138,107 +135,6 @@ class OptionBase(OptionParams):  #, ABC):
 
         if self.sigma <= 0:
             raise ValueError(f"The underlying's volatility cannot be negative or 0. Input was {self.sigma}.")
-
-    def _validate_model(self, function_name: str) -> None:
-        """
-        Used to validate if a specific model pricing can be used on a option.
-
-        Parameters
-        -----------
-        function_name : str
-            The name of the current function being used.
-
-        Raises
-        -----------
-        UnsupportedModelException
-            Raised if the intended model doesn't support the option's exercise.
-
-        InvalidOptionExerciseException
-            Raised if the option's exercise style isn't supported.
-        """
-
-        valid_european = ["black_scholes", "black_scholes_merton", "black_76",
-                          "binomial_leisen_reimer", "binomial_jarrow_rudd",
-                          "binomial_rendleman_bartter", "binomial_cox_ross_rubinstein",
-                          "binomial_jarrow_rudd_risk_neutral","binomial_tian", "black_scholes_adaptive", "bachelier",
-                          "bachelier_modified"]
-
-        if self.rf is not None:
-            valid_european.append("garman_kohlhagen")
-        valid_american = ["bjerksund_stensland_1993", "bjerksund_stensland_2002", "bjerksund_stensland_combined",
-                           "binomial_leisen_reimer", "binomial_jarrow_rudd", "binomial_rendleman_bartter",
-                           "binomial_cox_ross_rubinstein", "binomial_jarrow_rudd_risk_neutral", "binomial_tian",
-                           "barone_adesi_whaley"]
-
-        valid_bermuda = []
-
-        valid_asian = []
-
-        exercise = self.exercise_style.value if isinstance(self.exercise_style, OptionExerciseStyle) else self.exercise_style
-
-        if self.b == 0:
-            valid_european.append("vega_black_76_max_time")
-
-        if self.exercise_style == OptionExerciseStyle.European:
-            if function_name not in valid_european:
-                raise UnsupportedModelException(
-                f"{function_name} is not usable for European-style options. "
-                f"The current option has a {exercise}-style exercise.")
-
-        elif self.exercise_style == OptionExerciseStyle.American:
-            if function_name not in valid_american:
-                raise UnsupportedModelException(
-                f"{function_name} is not usable for American-style options. "
-                f"The current option has a {exercise}-style exercise.")
-
-        elif self.exercise_style == OptionExerciseStyle.Bermuda:
-            if function_name not in valid_bermuda:
-                raise UnsupportedModelException(
-                f"{function_name} is not usable for Bermuda-style options. "
-                f"The current option has a {exercise}-style exercise.")
-
-        elif self.exercise_style == OptionExerciseStyle.Asian:
-            if function_name not in valid_asian:
-                raise UnsupportedModelException(
-                f"{function_name} is not usable for Asian-style options. "
-                f"The current option has a {exercise}-style exercise.")
-
-        else:
-            raise InvalidOptionExerciseException(f"The option's exercise type '{exercise}' is not valid.")
-
-    @property
-    def d1(self) -> float:
-        """
-        Return the d1 parameter used in the Black-Scholes formula among others.
-
-        Parameters
-        -----------
-        b : float
-            The cost of carry rate, which is determined by the given pricing model.
-
-        Returns
-        -----------
-        float
-            The d1 parameter based on the given cost of carry of from a model.
-        """
-        return (np.log(self.s / self.k) + (self.b + self.sigma ** 2 / 2) * self.t) / (self.sigma * np.sqrt(self.t))
-
-    @property
-    def d2(self) -> float:
-        """
-        Return the d2 parameter used in the Black-Scholes formula among others.
-
-        Parameters
-        -----------
-        b : float
-            The cost of carry rate, which is determined by the given pricing model.
-
-        Returns
-        -----------
-        float
-            The d2 parameter based on the given cost of carry of from a model.
-        """
-        return self.d1 - self.sigma * np.sqrt(self.t)
 
     @property
     @abstractmethod
@@ -262,7 +158,6 @@ class OptionBase(OptionParams):  #, ABC):
             return np.maximum(self.k - self.s, 0)
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     @abstractmethod
     def intrinsic_value_variable(self, s: float | None = None, k: float | None = None) -> float:
@@ -288,7 +183,6 @@ class OptionBase(OptionParams):  #, ABC):
             return np.maximum(k - s, 0)
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     @property
     @abstractmethod
@@ -361,7 +255,7 @@ class OptionBase(OptionParams):  #, ABC):
         str
             The option's moneyness.
         """
-        if np.absolute(self.s - self.k) < 0.05:
+        if np.absolute(self.s - self.k) < ATM_THRESHOLD:
             return "At the money."
         elif self.at_the_forward:
             return "At the forward."
@@ -376,17 +270,12 @@ class OptionBase(OptionParams):  #, ABC):
         """
         Return True if the Option is currently at the forward, else False.
 
-        Parameters
-        -----------
-        tolerance : float, defaults to 1e-5
-            The tolerance level of the evaluation.
-
         Returns
         -----------
         bool
             The boolean condition if the option is at the forward or not.
         """
-        return abs(self.k - self.s * np.exp(self.b * self.t)) < 1e-5
+        return abs(self.k - self.s * np.exp(self.b * self.t)) < AT_FORWARD_THRESHOLD
 
     @property
     @abstractmethod

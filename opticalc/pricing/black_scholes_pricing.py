@@ -19,8 +19,7 @@ class BlackScholesPricing(PricingBase):
         float
             The theoretical option value
         """
-        return self._cost_of_carry_black_scholes(self.b)
-
+        return self.black_scholes_cost_of_carry(self.b)
 
     def black_scholes(self) -> float:
         """
@@ -33,8 +32,7 @@ class BlackScholesPricing(PricingBase):
             The theoretical option value
         """
         _b = self.r
-        return self._cost_of_carry_black_scholes(_b)
-
+        return self.black_scholes_cost_of_carry(_b)
 
     def black_scholes_merton(self) -> float:
         """
@@ -48,14 +46,14 @@ class BlackScholesPricing(PricingBase):
             The theoretical option value
         """
         _b = self.r - self.q
-        return self._cost_of_carry_black_scholes(_b)
-
+        return self.black_scholes_cost_of_carry(_b)
 
     def black_76(self) -> float:
         """
         Return the theoretical value of a european option using the Black formula (Sometimes known as the Black-76 Model).
         Assumes constant volatility, risk-free rate, and no dividends.
-        Its main application includes the pricing of options on futures, bonds and swaptions, where the underlying has no cost-of-carry.
+        Its main application includes the pricing of options on futures, bonds and swaptions, where the underlying has no
+        cost-of-carry.
 
         Returns
         -----------
@@ -63,13 +61,12 @@ class BlackScholesPricing(PricingBase):
             The theoretical option value
         """
         _b = 0
-        return self._cost_of_carry_black_scholes(_b)
-
+        return self.black_scholes_cost_of_carry(_b)
 
     def garman_kohlhagen(self) -> float:
         """
-        Return the theoretical value of a european option using the Garman-Kohlhagen formula, which differentiates itself by including two interest rates.
-        Assumes constant volatility, domestic & foreign risk-free rates and no dividends.
+        Return the theoretical value of a european option using the Garman-Kohlhagen formula, which differentiates itself by
+        including two interest rates. Assumes constant volatility, domestic & foreign risk-free rates and no dividends.
         Its main application includes pricing FX Options.
 
         Raises
@@ -84,6 +81,6 @@ class BlackScholesPricing(PricingBase):
         """
         if self.rf is not None:
             _b = self.r - self.rf
-            return self._cost_of_carry_black_scholes(_b)
+            return self.black_scholes_cost_of_carry(_b)
         else:
             raise NameError("The foreign interest rate (rf) must be defined.")

@@ -1,7 +1,7 @@
 from typing import cast
 
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm  # type: ignore
 
 from opticalc.core.enums import OptionType, Underlying
 from opticalc.pricing.base import PricingBase
@@ -36,12 +36,11 @@ class BlackScholesGreeks(PricingBase):
             Raised if the option's exercise style isn't supported.
         """
         if self.option_type == OptionType.Call:
-            return np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1(self.b))
+            return np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return -np.exp((self.b - self.r) * self.t) * norm.cdf(- self.d1(self.b))
+            return -np.exp((self.b - self.r) * self.t) * norm.cdf(- self.d1_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     @property
     def delta_mirror(self) -> float:
@@ -72,7 +71,6 @@ class BlackScholesGreeks(PricingBase):
             return (self.s ** 2 / self.k) * np.exp((2 * self.b + self.sigma ** 2) * self.t)
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     @property
     def straddle_symmetric_underlying(self) -> float:
@@ -121,7 +119,6 @@ class BlackScholesGreeks(PricingBase):
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
-
     def strike_from_futures_delta(self, delta: float) -> float:
         """
         Return the option's strike price for a given futures Delta.
@@ -147,12 +144,11 @@ class BlackScholesGreeks(PricingBase):
         """
         delta = delta * np.exp(-self.b * self.t)
         if self.option_type == OptionType.Call:
-            return self.s * np.exp(-norm.ppf(delta * np.exp((self.r - self.b) * self.t)) * self.sigma *np.sqrt(self.t) + (self.b + self.sigma ** 2 / 2) * self.t)
+            return self.s * np.exp(-norm.ppf(delta * np.exp((self.r - self.b) * self.t)) * self.sigma * np.sqrt(self.t) + (self.b + self.sigma ** 2 / 2) * self.t)
         elif self.option_type == OptionType.Put:
-            return self.s * np.exp(norm.ppf(-delta * np.exp((self.r - self.b) * self.t)) * self.sigma *np.sqrt(self.t) + (self.b + self.sigma ** 2 / 2) * self.t)
+            return self.s * np.exp(norm.ppf(-delta * np.exp((self.r - self.b) * self.t)) * self.sigma * np.sqrt(self.t) + (self.b + self.sigma ** 2 / 2) * self.t)
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     @property
     def dual_delta(self) -> float:
@@ -172,13 +168,11 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return np.exp(-self.r * self.t) * norm.cdf(self.d2(self.b))
+            return np.exp(-self.r * self.t) * norm.cdf(self.d2_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return np.exp(-self.r * self.t) * norm.cdf(self.d2(self.b))
+            return np.exp(-self.r * self.t) * norm.cdf(self.d2_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
-
 
     @property
     def dual_gamma(self) -> float:
@@ -200,8 +194,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return np.exp(-self.r * self.t) * (norm.pdf(self.d2(self.b)) / (self.k * self.sigma * np.sqrt(self.t)))
-
+            return np.exp(-self.r * self.t) * (norm.pdf(self.d2_cost_of_carry(self.b)) / (self.k * self.sigma * np.sqrt(self.t)))
 
     @property
     def dual_theta(self) -> float:
@@ -223,8 +216,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return - self._cost_of_carry_black_scholes(self.b)
-
+            return - self.black_scholes_cost_of_carry(self.b)
 
     @property
     def alpha(self) -> float:
@@ -249,7 +241,6 @@ class BlackScholesGreeks(PricingBase):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
             return np.abs(self.theta / self.gamma)
-
 
     @property
     def vanna(self) -> float:
@@ -281,9 +272,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return ((-np.exp((self.b - self.r) * self.t) * self.d2(self.b)) / (self.sigma)) * norm.pdf(self.d1(self.b))
-
-
+            return ((-np.exp((self.b - self.r) * self.t) * self.d2_cost_of_carry(self.b)) / (self.sigma)) * norm.pdf(self.d1_cost_of_carry(self.b))
 
     @property
     def max_vanna(self) -> float:
@@ -303,7 +292,6 @@ class BlackScholesGreeks(PricingBase):
 
         return self.k * np.exp(-self.b * self.t - self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
 
-
     @property
     def min_vanna(self) -> float:
         """
@@ -320,8 +308,6 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         return self.k * np.exp(-self.b * self.t + self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
-
-
 
     @property
     def vanna_min_strike(self) -> float:
@@ -340,8 +326,6 @@ class BlackScholesGreeks(PricingBase):
         """
         return self.s * np.exp(self.b * self.t - self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
 
-
-
     @property
     def vanna_max_strike(self) -> float:
         """
@@ -358,8 +342,6 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         return self.s * np.exp(self.b * self.t + self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
-
-
 
     @property
     def yanna(self) -> float:
@@ -384,8 +366,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.vanna * (1/self.sigma) * (self.d1(self.b) * self.d2(self.b) - (self.d1(self.b) /self.d2(self.b)) - 1)
-
+            return self.vanna * (1 / self.sigma) * (self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - (self.d1_cost_of_carry(self.b) / self.d2_cost_of_carry(self.b)) - 1)
 
     @property
     def charm(self) -> float:
@@ -407,12 +388,11 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return -np.exp((self.b - self.r) * self.t) * (norm.pdf(self.d1(self.b)) * ( (self.b) / (self.sigma * np.sqrt(self.t))   - (self.d2(self.b)) / (2 * self.t)) + (self.b - self.r) * norm.cdf(self.d1(self.b)))
+            return -np.exp((self.b - self.r) * self.t) * (norm.pdf(self.d1_cost_of_carry(self.b)) * ((self.b) / (self.sigma * np.sqrt(self.t)) - (self.d2_cost_of_carry(self.b)) / (2 * self.t)) + (self.b - self.r) * norm.cdf(self.d1_cost_of_carry(self.b)))
         elif self.option_type == OptionType.Put:
-            return -np.exp((self.b - self.r) * self.t) * (norm.pdf(self.d1(self.b)) * ( (self.b) / (self.sigma * np.sqrt(self.t))   - (self.d2(self.b)) / (2 * self.t)) - (self.b - self.r) * norm.cdf(-self.d1(self.b)))
+            return -np.exp((self.b - self.r) * self.t) * (norm.pdf(self.d1_cost_of_carry(self.b)) * ((self.b) / (self.sigma * np.sqrt(self.t)) - (self.d2_cost_of_carry(self.b)) / (2 * self.t)) - (self.b - self.r) * norm.cdf(-self.d1_cost_of_carry(self.b)))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     @property
     def elasticity(self) -> float:
@@ -434,13 +414,11 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1(self.b)) * (self.s / self._cost_of_carry_black_scholes(self.b))
+            return np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b)) * (self.s / self.black_scholes_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return np.exp((self.b - self.r) * self.t) * (norm.cdf(self.d1(self.b)) - 1) * (self.s / self._cost_of_carry_black_scholes(self.b))
+            return np.exp((self.b - self.r) * self.t) * (norm.cdf(self.d1_cost_of_carry(self.b)) - 1) * (self.s / self.black_scholes_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
-
 
     @property
     def short_term_option_volatility(self) -> float:
@@ -461,8 +439,6 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         return self.sigma * np.abs(self.elasticity)
-
-
 
     @property
     def gamma(self) -> float:
@@ -490,8 +466,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return (norm.pdf(self.d1(self.b)) * np.exp((self.b - self.r) * self.t)) / (self.s * self.sigma * np.sqrt(self.t))
-
+            return (norm.pdf(self.d1_cost_of_carry(self.b)) * np.exp((self.b - self.r) * self.t)) / (self.s * self.sigma * np.sqrt(self.t))
 
     @property
     def gamma_percent(self) -> float:
@@ -515,8 +490,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return (self.s * (norm.pdf(self.d1(self.b)) * np.exp((self.b - self.r) * self.t)) / (self.s * self.sigma * np.sqrt(self.t))) / 100
-
+            return (self.s * (norm.pdf(self.d1_cost_of_carry(self.b)) * np.exp((self.b - self.r) * self.t)) / (self.s * self.sigma * np.sqrt(self.t))) / 100
 
     @property
     def gamma_percent_max_underlying(self) -> float:
@@ -533,9 +507,7 @@ class BlackScholesGreeks(PricingBase):
         InvalidOptionExerciseException
             Raised when the option's exercise style is not recognized or supported.
         """
-        return self.k * np.exp((- self.b -  self.sigma ** 2 / 2) * self.t)
-
-
+        return self.k * np.exp((- self.b - self.sigma ** 2 / 2) * self.t)
 
     @property
     def gamma_percent_max_strike(self) -> float:
@@ -588,7 +560,6 @@ class BlackScholesGreeks(PricingBase):
         """
         return self.s * np.exp((self.b + self.sigma ** 2 / 2) * self.t)
 
-
     @property
     def gamma_saddle_time(self) -> float:
         """
@@ -610,8 +581,6 @@ class BlackScholesGreeks(PricingBase):
 
         return 1 / (2 * (self.sigma ** 2 + 2 * self.b - self.r))
 
-
-
     @property
     def gamma_saddle_underlying(self) -> float:
         """
@@ -629,7 +598,6 @@ class BlackScholesGreeks(PricingBase):
         """
         return self.k * np.exp((-self.b - 3 * self.sigma ** 2 / 2) * self.gamma_saddle_time)
 
-
     @property
     def gamma_saddle(self) -> float:
         """
@@ -646,8 +614,6 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         return (np.sqrt(np.exp(1) / np.pi) * np.sqrt((2 * self.b - self.r) / self.sigma ** 2 + 1)) / self.k
-
-
 
     @property
     def zomma(self) -> float:
@@ -672,7 +638,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.gamma * ((self.d1(self.b) * self.d2(self.b) - 1) / self.sigma)
+            return self.gamma * ((self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - 1) / self.sigma)
 
     @property
     def zomma_range_underlying(self) -> tuple[float, float, str, str]:
@@ -747,7 +713,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.gamma_percent * ((self.d1(self.b) * self.d2(self.b) - 1) / self.sigma)
+            return self.gamma_percent * ((self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - 1) / self.sigma)
 
     @property
     def speed(self) -> float:
@@ -771,8 +737,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return -((self.gamma * (1 + self.d1(self.b) / (self.sigma * np.sqrt(self.t))   )) / self.s)
-
+            return -((self.gamma * (1 + self.d1_cost_of_carry(self.b) / (self.sigma * np.sqrt(self.t)))) / self.s)
 
     @property
     def speed_percent(self) -> float:
@@ -796,7 +761,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return - self.gamma * (self.d1(self.b) / (100 * self.sigma * np.sqrt(self.t)))
+            return - self.gamma * (self.d1_cost_of_carry(self.b) / (100 * self.sigma * np.sqrt(self.t)))
 
     @property
     def colour(self) -> float:
@@ -822,7 +787,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.gamma * (self.r - self.b + (self.b * self.d1(self.b) / self.sigma * np.sqrt(self.t))  + ( (1 - self.d1(self.b) * self.d2(self.b)) / 2 * self.t))
+            return self.gamma * (self.r - self.b + (self.b * self.d1_cost_of_carry(self.b) / self.sigma * np.sqrt(self.t)) + ((1 - self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b)) / 2 * self.t))
 
     @property
     def colour_percent(self) -> float:
@@ -846,7 +811,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.gamma_percent * (self.r - self.b + (self.b * self.d1(self.b) / self.sigma * np.sqrt(self.t))  + ( (1 - self.d1(self.b) * self.d2(self.b)) / 2 * self.t))
+            return self.gamma_percent * (self.r - self.b + (self.b * self.d1_cost_of_carry(self.b) / self.sigma * np.sqrt(self.t)) + ((1 - self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b)) / 2 * self.t))
 
     @property
     def vega(self) -> float:
@@ -869,7 +834,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1(self.b)) * np.sqrt(self.t)
+            return self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * np.sqrt(self.t)
 
     @property
     def vega_percent(self) -> float:
@@ -892,8 +857,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return (self.sigma / 10) * self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1(self.b)) * np.sqrt(self.t)
-
+            return (self.sigma / 10) * self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * np.sqrt(self.t)
 
     @property
     def vega_max_underlying_local(self) -> float:
@@ -912,8 +876,6 @@ class BlackScholesGreeks(PricingBase):
         """
         return self.k * np.exp((- self.b + self.sigma ** 2 / 2) * self.t)
 
-
-
     @property
     def vega_max_strike_local(self) -> float:
         """
@@ -930,7 +892,6 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         return self.s * np.exp((self.b + self.sigma ** 2 / 2) * self.t)
-
 
     @property
     def vega_black_76_max_time(self) -> float:
@@ -949,8 +910,6 @@ class BlackScholesGreeks(PricingBase):
         """
         return (2 * (1 + np.sqrt(1 + (8 * self.r * (1/self.sigma ** 2) + 1) * np.log(self.s / self.k) ** 2))) / (8 * self.r + self.sigma ** 2)
 
-
-
     @property
     def vega_max_time_global(self) -> float:
         """
@@ -966,7 +925,7 @@ class BlackScholesGreeks(PricingBase):
         InvalidOptionExerciseException
             Raised when the option's exercise style is not recognized or supported.
         """
-        return 1 / (2* self.r)
+        return 1 / (2 * self.r)
 
     @property
     def vega_max_underlying_global(self) -> float:
@@ -983,7 +942,7 @@ class BlackScholesGreeks(PricingBase):
         InvalidOptionExerciseException
             Raised when the option type is something else than "call" and "put".
         """
-        return self.k * np.exp( (-self.b + self.sigma ** 2 / 2)  / (2 * self.r))
+        return self.k * np.exp((-self.b + self.sigma ** 2 / 2) / (2 * self.r))
 
     @property
     def vega_max(self) -> float:
@@ -1022,7 +981,7 @@ class BlackScholesGreeks(PricingBase):
         InvalidOptionExerciseException
             Raised when the option's exercise style is not recognized or supported.
         """
-        return self.vega * self.sigma / self._cost_of_carry_black_scholes(self.b)
+        return self.vega * self.sigma / self.black_scholes_cost_of_carry(self.b)
 
     @property
     def vomma(self) -> float:
@@ -1057,7 +1016,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.vega * ((self.d1(self.b) * self.d2(self.b)) / self.sigma)
+            return self.vega * ((self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b)) / self.sigma)
 
     @property
     def vomma_range_strike(self) -> tuple[float, float, str, str]:
@@ -1112,7 +1071,6 @@ class BlackScholesGreeks(PricingBase):
         text_alternative = f"Vomma and Vomma Percent are positive for the underlying prices outside of {lower_boundary:.4f} and {upper_boundary:.4f}"
         return lower_boundary, upper_boundary, text, text_alternative
 
-
     @property
     def vomma_percent(self) -> float:
         """
@@ -1134,8 +1092,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.vega_percent * ((self.d1(self.b) * self.d2(self.b)) / self.sigma)
-
+            return self.vega_percent * ((self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b)) / self.sigma)
 
     @property
     def ultima(self) -> float:
@@ -1159,8 +1116,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.vomma * (1 / self.sigma) * (self.d1(self.b) * self.d2(self.b) - (self.d1(self.b) / self.d2(self.b)) - (self.d2(self.b) / self.d1(self.b)) - 1)
-
+            return self.vomma * (1 / self.sigma) * (self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - (self.d1_cost_of_carry(self.b) / self.d2_cost_of_carry(self.b)) - (self.d2_cost_of_carry(self.b) / self.d1_cost_of_carry(self.b)) - 1)
 
     @property
     def veta(self) -> float:
@@ -1186,7 +1142,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return self.vega * (self.r - self.b + self.b * self.d1(self.b) / self.sigma * np.sqrt(self.t) - ((1 + self.d1(self.b) * self.d2(self.b)) / 2 * self.t))
+            return self.vega * (self.r - self.b + self.b * self.d1_cost_of_carry(self.b) / self.sigma * np.sqrt(self.t) - ((1 + self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b)) / 2 * self.t))
 
     @property
     def variance_vega(self) -> float:
@@ -1207,9 +1163,7 @@ class BlackScholesGreeks(PricingBase):
         InvalidOptionExerciseException
             Raised when the option's exercise style is not recognized or supported.
         """
-        return self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1(self.b)) * (np.sqrt(self.t) /  (2 * self.sigma))
-
-
+        return self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * (np.sqrt(self.t) / (2 * self.sigma))
 
     @property
     def ddeltadvar(self) -> float:
@@ -1228,9 +1182,7 @@ class BlackScholesGreeks(PricingBase):
         InvalidOptionExerciseException
             Raised when the option's exercise style is not recognized or supported.
         """
-        return - self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1(self.b)) * (self.d2(self.b) / (2 * self.sigma ** 2))
-
-
+        return - self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * (self.d2_cost_of_carry(self.b) / (2 * self.sigma ** 2))
 
     @property
     def variance_vomma(self) -> float:
@@ -1249,9 +1201,7 @@ class BlackScholesGreeks(PricingBase):
         InvalidOptionExerciseException
             Raised when the option's exercise style is not recognized or supported.
         """
-        return ((self.s * np.exp((self.b - self.r)  * self.t) * np.sqrt(self.t)) / (4 * self.sigma ** 3)) * norm.pdf(self.d1(self.b)) * (self.d1(self.b) * self.d2(self.b) - 1)
-
-
+        return ((self.s * np.exp((self.b - self.r) * self.t) * np.sqrt(self.t)) / (4 * self.sigma ** 3)) * norm.pdf(self.d1_cost_of_carry(self.b)) * (self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - 1)
 
     @property
     def variance_ultima(self) -> float:
@@ -1270,9 +1220,7 @@ class BlackScholesGreeks(PricingBase):
         InvalidOptionExerciseException
             Raised when the option's exercise style is not recognized or supported.
         """
-        return ((self.s * np.exp((self.b - self.r)  * self.t) * np.sqrt(self.t)) / (8 * self.sigma ** 5)) * norm.pdf(self.d1(self.b)) * ( (self.d1(self.b) * self.d2(self.b) - 1) * (self.d1(self.b) * self.d2(self.b) - 3) - (self.d1(self.b) ** 2 + self.d2(self.b) ** 2))
-
-
+        return ((self.s * np.exp((self.b - self.r) * self.t) * np.sqrt(self.t)) / (8 * self.sigma ** 5)) * norm.pdf(self.d1_cost_of_carry(self.b)) * ((self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - 1) * (self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - 3) - (self.d1_cost_of_carry(self.b) ** 2 + self.d2_cost_of_carry(self.b) ** 2))
 
     @property
     def theta(self) -> float:
@@ -1293,12 +1241,11 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return -((self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1(self.b)) * self.sigma) / (2 * np.sqrt(self.t))) - (self.b - self.r) * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1(self.b)) - self.r * self.k * np.exp(-self.r * self.t) * norm.cdf(self.d2(self.b))
+            return -((self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * self.sigma) / (2 * np.sqrt(self.t))) - (self.b - self.r) * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b)) - self.r * self.k * np.exp(-self.r * self.t) * norm.cdf(self.d2_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return -((self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1(self.b)) * self.sigma) / (2 * np.sqrt(self.t))) + (self.b - self.r) * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1(self.b)) + self.r * self.k * np.exp(-self.r * self.t) * norm.cdf(-self.d2(self.b))
+            return -((self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * self.sigma) / (2 * np.sqrt(self.t))) + (self.b - self.r) * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1_cost_of_carry(self.b)) + self.r * self.k * np.exp(-self.r * self.t) * norm.cdf(-self.d2_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     def theta_daily(self, trading_days: int = 365) -> float:
         """
@@ -1330,7 +1277,6 @@ class BlackScholesGreeks(PricingBase):
             raise ValueError(f"The option's trading days '{trading_days}' is not valid, it has to be positive.")
         return self.theta / trading_days
 
-
     @property
     def driftless_theta(self) -> float:
         """
@@ -1351,10 +1297,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return -(self.s * norm.pdf(self.d1(self.b)) * self.sigma) / (2 * np.sqrt(self.t))
-
-
-
+            return -(self.s * norm.pdf(self.d1_cost_of_carry(self.b)) * self.sigma) / (2 * np.sqrt(self.t))
 
     def driftless_theta_daily(self, trading_days: int) -> float:
         """
@@ -1432,11 +1375,11 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.underlying_type and self.underlying_type == Underlying.Future:
-            return -self.t * self._cost_of_carry_black_scholes(self.b)
+            return -self.t * self.black_scholes_cost_of_carry(self.b)
         elif self.option_type == OptionType.Call:
-            return self.t * self.k * np.exp(-self.r * self.t) * norm.cdf(self.d2(self.b))
+            return self.t * self.k * np.exp(-self.r * self.t) * norm.cdf(self.d2_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return -self.t * self.k * np.exp(-self.r * self.t) * norm.cdf(-self.d2(self.b))
+            return -self.t * self.k * np.exp(-self.r * self.t) * norm.cdf(-self.d2_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
@@ -1459,9 +1402,9 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return - self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1(self.b))
+            return - self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1(self.b))
+            return self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
@@ -1483,9 +1426,9 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1(self.b))
+            return self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return -self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1(self.b))
+            return -self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
@@ -1508,9 +1451,9 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return cast(float, norm.cdf(self.d2(self.b)))
+            return cast(float, norm.cdf(self.d2_cost_of_carry(self.b)))
         elif self.option_type == OptionType.Put:
-            return cast(float, norm.cdf(-self.d2(self.b)))
+            return cast(float, norm.cdf(-self.d2_cost_of_carry(self.b)))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
@@ -1533,9 +1476,9 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return - np.exp(- self.r * self.t) * norm.cdf(self.d2(self.b))
+            return - np.exp(- self.r * self.t) * norm.cdf(self.d2_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return np.exp(-self.r * self.t) * norm.cdf(-self.d2(self.b))
+            return np.exp(-self.r * self.t) * norm.cdf(-self.d2_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
@@ -1616,9 +1559,9 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return cast(float, -norm.pdf(self.d2(self.b)) * (self.d1(self.b) / self.sigma))
+            return cast(float, -norm.pdf(self.d2_cost_of_carry(self.b)) * (self.d1_cost_of_carry(self.b) / self.sigma))
         elif self.option_type == OptionType.Put:
-            return cast(float, norm.pdf(self.d2(self.b)) * (self.d1(self.b) / self.sigma))
+            return cast(float, norm.pdf(self.d2_cost_of_carry(self.b)) * (self.d1_cost_of_carry(self.b) / self.sigma))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
@@ -1641,9 +1584,9 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return norm.pdf(self.d2(self.b)) * (self.b / (self.sigma * np.sqrt(self.t)) - self.d1(self.b) / 2 * self.t)
+            return norm.pdf(self.d2_cost_of_carry(self.b)) * (self.b / (self.sigma * np.sqrt(self.t)) - self.d1_cost_of_carry(self.b) / 2 * self.t)
         elif self.option_type == OptionType.Put:
-            return - norm.pdf(self.d2(self.b)) * (self.b / (self.sigma * np.sqrt(self.t)) - self.d1(self.b) / 2 * self.t)
+            return - norm.pdf(self.d2_cost_of_carry(self.b)) * (self.b / (self.sigma * np.sqrt(self.t)) - self.d1_cost_of_carry(self.b) / 2 * self.t)
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
@@ -1667,8 +1610,7 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
-            return (norm.pdf(self.d2(self.b)) * np.exp(-self.r * self.t) ) / (self.k * self.sigma * np.sqrt(self.t))
-
+            return (norm.pdf(self.d2_cost_of_carry(self.b)) * np.exp(-self.r * self.t)) / (self.k * self.sigma * np.sqrt(self.t))
 
     def strike_gamma_probability(self, p: float) -> float:
         """
@@ -1726,10 +1668,9 @@ class BlackScholesGreeks(PricingBase):
         if self.option_type == OptionType.Call:
             return (self.k / self.s) ** (mu + _lambda) * norm.cdf(-z) + (self.k / self.s) ** (mu - _lambda) * norm.cdf(-z + 2 * _lambda * self.sigma * np.sqrt(self.t))
         elif self.option_type == OptionType.Put:
-            return - norm.pdf(self.d2(self.b)) * (self.b / (self.sigma * np.sqrt(self.t)) - self.d1(self.b) / 2 * self.t)
+            return - norm.pdf(self.d2_cost_of_carry(self.b)) * (self.b / (self.sigma * np.sqrt(self.t)) - self.d1_cost_of_carry(self.b) / 2 * self.t)
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     @property
     def epsilon(self) -> float:
@@ -1747,12 +1688,11 @@ class BlackScholesGreeks(PricingBase):
             Raised when the option's exercise style is not recognized or supported.
         """
         if self.option_type == OptionType.Call:
-            return  -self.s * self.t * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1(self.b))
+            return -self.s * self.t * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b))
         elif self.option_type == OptionType.Put:
-            return self.s * self.t * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1(self.b))
+            return self.s * self.t * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-
 
     @property
     def vera(self) -> float:

@@ -5,8 +5,8 @@ class OptionType(Enum):
     """Option type"""
     Call = "call"
     Put = "put"
-    Straddle = "straddle" # Maybe not as optiontypes but rather a subclass like EuropeanOption
-    Butterfly = "butterfly" #
+    Straddle = "straddle"  # Maybe not as optiontypes but rather a subclass like EuropeanOption
+    Butterfly = "butterfly"  # ^
 
 
 class OptionExerciseStyle(Enum):
@@ -29,6 +29,6 @@ class Underlying(Enum):
     Stock_index = "index"
     Future = "future"
     FX = "fx"
-    Interest_rate = "interest_rate" # Bonds
-    Commodity = "commodity" # Only for spot commodity
+    Interest_rate = "interest_rate"  # Bonds
+    Commodity = "commodity"  # Only for spot commodity
     Swap = "swap"

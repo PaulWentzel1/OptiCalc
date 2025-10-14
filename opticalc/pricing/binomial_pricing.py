@@ -1,39 +1,12 @@
-from typing import cast, Any
+from typing import cast
 
 import numpy as np
-from numpy.typing import NDArray
 
 from opticalc.pricing.base import PricingBase
-from opticalc.core.enums import OptionExerciseStyle
+from opticalc.core.enums import OptionExerciseStyle, OptionType
 
 
 class BinomialPricing(PricingBase):
-    @staticmethod
-    def peizer_pratt_inversion_1(x: float, n: int) -> float:
-        """
-        Return the Preizer-Pratt inversion method 1 on the variable x.
-        Required for Leisen-Reimer binomial tree.
-        """
-        if x == 0:  # Extra check since np.sign returns 0 if x is 0
-            sign = 1
-        else:
-            sign = np.sign(x)
-
-        return 0.5 + 0.5 * sign * np.sqrt(1 - np.exp(-((x / (n + 1/3)) ** 2) * (n + 1/6)))
-
-    @staticmethod
-    def peizer_pratt_inversion_2(x: float, n: int) -> float:
-        """
-        Return the Preizer-Pratt inversion method 2 on the variable x.
-        Required for Leisen-Reimer binomial tree.
-        """
-        if x == 0:  # Extra check since np.sign returns 0 if x is 0
-            sign = 1
-        else:
-            sign = np.sign(x)
-
-        return 0.5 + sign * 0.5 * np.sqrt(1 - np.exp(-((x / (n + 1/3 + 0.1 / (n + 1))) ** 2) * (n + 1/6)))
-
     def universal_binomial_tree(self, up_factor: float, down_factor: float, p: float, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, where inputs such as the up- and
@@ -102,8 +75,7 @@ class BinomialPricing(PricingBase):
         underlying_price = np.zeros(n + 1)
         for i in range(n + 1):
             underlying_price[i] = self.s * (up_factor ** (n - i)) * (down_factor ** i)
-
-        option_values = cast(NDArray[Any], self.vanilla_intrinsic_value_variable(underlying_price))
+        option_values = np.maximum(underlying_price - self.k, 0) if self.option_type == OptionType.Call else np.maximum(self.k - underlying_price, 0)
 
         for step in range(n - 1, -1, -1):  # backward induction
             for i in range(step + 1):
@@ -116,7 +88,7 @@ class BinomialPricing(PricingBase):
                 else:  # American option
                     current_price = self.s * (up_factor ** (step - i)) * (down_factor ** i)
 
-                    intrinsic_value = self.vanilla_intrinsic_value_variable(current_price)
+                    intrinsic_value = np.maximum(current_price - self.k, 0) if self.option_type == OptionType.Call else np.maximum(self.k - current_price, 0)
 
                     option_values[i] = np.maximum(continuation_value, intrinsic_value)
 
@@ -226,8 +198,8 @@ class BinomialPricing(PricingBase):
             https://downloads.dxfeed.com/specifications/dxLibOptions/Leisen+Reimer+Binomial+tree.pdf
         """
 
-        p = self.peizer_pratt_inversion_1(self.d2(self.b), n)
-        up_factor = np.exp(self.b * (self.t / n)) * self.peizer_pratt_inversion_1(self.d1(self.b), n) / self.peizer_pratt_inversion_1(self.d2(self.b), n)
+        p = peizer_pratt_inversion_1(self.d2_cost_of_carry(self.b), n)
+        up_factor = np.exp(self.b * (self.t / n)) * peizer_pratt_inversion_1(self.d1_cost_of_carry(self.b), n) / peizer_pratt_inversion_1(self.d2_cost_of_carry(self.b), n)
         down_factor = (np.exp(self.b * (self.t / n)) - p * up_factor) / (1 - p)
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
@@ -314,3 +286,29 @@ class BinomialPricing(PricingBase):
         p = (np.exp(self.b * (self.t / n)) - down_factor) / (up_factor - down_factor)
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
+
+
+def peizer_pratt_inversion_1(x: float, n: int) -> float:
+    """
+    Return the Preizer-Pratt inversion method 1 on the variable x.
+    Required for Leisen-Reimer binomial tree.
+    """
+    if x == 0:  # Extra check since np.sign returns 0 if x is 0
+        sign = 1
+    else:
+        sign = np.sign(x)
+
+    return 0.5 + 0.5 * sign * np.sqrt(1 - np.exp(-((x / (n + 1/3)) ** 2) * (n + 1/6)))
+
+
+def peizer_pratt_inversion_2(x: float, n: int) -> float:
+    """
+    Return the Preizer-Pratt inversion method 2 on the variable x.
+    Required for Leisen-Reimer binomial tree.
+    """
+    if x == 0:  # Extra check since np.sign returns 0 if x is 0
+        sign = 1
+    else:
+        sign = np.sign(x)
+
+    return 0.5 + sign * 0.5 * np.sqrt(1 - np.exp(-((x / (n + 1/3 + 0.1 / (n + 1))) ** 2) * (n + 1/6)))

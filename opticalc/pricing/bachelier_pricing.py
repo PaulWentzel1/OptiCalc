@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm  # type: ignore
 
 from opticalc.core.enums import OptionType
 from opticalc.pricing.base import PricingBase
@@ -7,7 +7,6 @@ from opticalc.utils.exceptions import InvalidOptionTypeException
 
 
 class BachelierPricing(PricingBase):
-
     def bachelier(self) -> float:
         """
         Return the theoretical value of a european option using the Bachelier model.
@@ -56,8 +55,12 @@ class BachelierPricing(PricingBase):
         d1 = (self.s - self.k) / self.sigma * np.sqrt(self.t)
 
         if self.option_type == OptionType.Call:
-            return self.s * norm.cdf(d1) - self.k * np.exp(-self.r * self.t) * norm.cdf(d1) + self.sigma * np.sqrt(self.t) * norm.pdf(d1)
+            return (self.s * norm.cdf(d1) - self.k * np.exp(-self.r * self.t)
+                    * norm.cdf(d1) + self.sigma * np.sqrt(self.t) * norm.pdf(d1))
+
         elif self.option_type == OptionType.Put:
-            return self.k * np.exp(-self.r * self.t) * norm.cdf(-d1) - self.s * norm.cdf(-d1) + self.sigma * np.sqrt(self.t) * norm.pdf(d1)
+            return (self.k * np.exp(-self.r * self.t) * norm.cdf(-d1) - self.s
+                    * norm.cdf(-d1) + self.sigma * np.sqrt(self.t) * norm.pdf(d1))
+
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")

@@ -1,4 +1,4 @@
-# OptiCalc: An intuitive and versatile option library.
+# OptiCalc: An intuitive and versatile options library.
 ## Overview
 ```OptiCalc``` is a Python library designed to provide the user with a high-level and intuitive API for option pricing, greeks calculation, implied volatility calculation and more.
 

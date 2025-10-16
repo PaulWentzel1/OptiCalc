@@ -1,7 +1,7 @@
 [project]
 name = "OptiCalc"
 version = "0.1.0"
-description = "A comprehensive and versatile options calculator"
+description = "An intuitive and versatile options library."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
 authors = [
@@ -19,7 +19,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -39,7 +38,7 @@ dependencies = [
     "numpy>=1.22.2",
     "scipy>=1.16.1"
 ]
-requires-python = ">=3.9.10"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = [

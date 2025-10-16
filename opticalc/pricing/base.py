@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 from scipy.stats import norm  # type: ignore
 
@@ -6,24 +8,9 @@ from opticalc.core.params import OptionParams
 from opticalc.utils.exceptions import InvalidOptionTypeException, InvalidOptionExerciseException, UnsupportedModelException
 
 
-class PricingBase:
-    def __init__(self, params: OptionParams):
-        self.params = params
-        self.s = params.s
-        self.k = params.k
-        self.t = params.t
-        self.r = params.r
-        self.q = params.q
-        self.sigma = params.sigma
-        self.option_type = params.option_type
-        self.exercise_style = params.exercise_style
-        self.b = params.b
-        self.rf = params.rf
-        self.premium = params.premium
-        self.transaction_costs = params.transaction_costs
-        self.underlying_type = params.underlying_type
-        self.direction = params.direction
-        self.underlying_contracts = params.underlying_contracts
+class PricingBase(OptionParams):
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
 
     def validate_pricing_model(self, method_name: str):
         """
@@ -52,7 +39,7 @@ class PricingBase:
             "bachelier",
             "bachelier_modified",
 
-            "universal_binomial_tree"
+            "universal_binomial_tree",
             "binomial_cox_ross_rubinstein",
             "binomial_cox_ross_rubinstein_drift",
             "binomial_rendleman_bartter",

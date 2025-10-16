@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class OptionType(Enum):
-    """Option type"""
+    """Option type."""
     Call = "call"
     Put = "put"
     Straddle = "straddle"  # Maybe not as optiontypes but rather a subclass like EuropeanOption
@@ -10,7 +10,7 @@ class OptionType(Enum):
 
 
 class OptionExerciseStyle(Enum):
-    """Option exercise style"""
+    """Option exercise style."""
     European = "european"
     American = "american"
     Bermuda = "bermuda"
@@ -18,13 +18,13 @@ class OptionExerciseStyle(Enum):
 
 
 class Direction(Enum):
-    """Direction of the option"""
+    """Direction of the option."""
     Long = "long"
     Short = "short"
 
 
 class Underlying(Enum):
-    """Type of underlying"""
+    """Type of underlying."""
     Equity = "equity"
     Stock_index = "index"
     Future = "future"

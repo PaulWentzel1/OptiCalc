@@ -7,6 +7,10 @@ from opticalc.core.enums import OptionExerciseStyle, OptionType
 
 
 class BinomialPricing(PricingBase):
+    """
+    Calculate the value of american-exercise style options using various implementations of the Binomial Tree model.
+    """
+
     def universal_binomial_tree(self, up_factor: float, down_factor: float, p: float, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, where inputs such as the up- and

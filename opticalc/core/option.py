@@ -9,7 +9,7 @@ from opticalc.utils.exceptions import InvalidOptionExerciseException
 
 class Option(OptionBase):
     """
-    A generalized option. The class will change type into a EuropeanOption, AmericanOption etc based on the input given for
+    A generalized option. The class will change type into a EuropeanOption, AmericanOption etc. based on the input given for
     exercise_style
     The class represents a financial option (Gives the holder the right, but not the obligation, to buy/sell the specific
     underlying asset).

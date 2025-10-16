@@ -9,17 +9,23 @@ from opticalc.core.constants import ATM_THRESHOLD, AT_FORWARD_THRESHOLD
 from opticalc.utils.exceptions import (InvalidDirectionException,
                                        InvalidOptionExerciseException,
                                        InvalidOptionTypeException,
-                                       InvalidUnderlyingException)
+                                       InvalidUnderlyingException,
+                                       MissingParameterException)
 
 
 class OptionBase(OptionParams, ABC):
-    """Core methods with validation and cost of carry logic"""
+    """
+    OptionBase contains the core methods and logic for an Option-type object, such as input validation and dunder methods.
+    The class inherits from OptionParams to accommodate the option's parameters or "input".
 
+    Some methods are defined as abstractmethods, this is to accommodate for them being overwritten or modified in child
+    objects like EuropeanOption, AmericanOption and BermudaOption as these might contain special cases (especially for exotic
+    options) where the current, vanilla implementation in OptionBase is invalid.
+    """
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
 
-        # Input validation and processing
-        self._process_and_validate_inputs()
+        #self._process_and_validate_inputs()  # Input validation and processing
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(s={self.s}, k={self.k}, t={self.t}, r={self.r}, q={self.q}, sigma={self.sigma}, option_type={self.option_type}, exercise_style={self.exercise_style}, b={self.b}, rf={self.rf}, premium={self.premium},transaction_costs={self.transaction_costs}, underlying_type={self.underlying_type}, direction={self.direction})"
@@ -58,7 +64,8 @@ class OptionBase(OptionParams, ABC):
             f"{_transaction}"
         )
 
-    def _process_and_validate_inputs(self) -> None:
+
+    def __setattr__(self, name: str, value: Any):
         """
         Validates specific inputs of an option and converts some to enums if necessary.
         The method validates the underlying price, strike, time to expiry, volatility type, exercise, underlying, direction,
@@ -77,7 +84,85 @@ class OptionBase(OptionParams, ABC):
         InvalidDirectionException
             Raised if the option's direction is invalid.
 
-        NameError
+        MissingParameterException
+            Raised if a specific variable is not defined or is None. (In this case if the Underlying is FX and rf is None).
+
+        ValueError
+            Raised if any of the inputs seem unreasonable or would result in faulty calculations.
+        """
+        if name in ("s", "k", "t", "sigma"):
+            if value <= 0:
+                raise ValueError(f"{name} must be greater than 0.")
+
+        elif name == "option_type":
+            if isinstance(value, str):
+                try:
+                    value = OptionType(value.lower())
+                except ValueError as e:
+                    raise InvalidOptionTypeException(f"Invalid input '{value}'. Valid inputs for option_type are: "
+                                                    f"{[element.value for element in OptionType]}") from e
+            elif not isinstance(value, OptionType):
+                raise InvalidOptionTypeException(f"Invalid input '{value}'. Valid inputs for option_type are: "
+                                                    f"{[element.value for element in OptionType]}")
+        elif name == "exercise_style":
+            if isinstance(value, str):
+                try:
+                    value = OptionExerciseStyle(value.lower())
+                except ValueError as e:
+                    raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in OptionExerciseStyle]}") from e
+            elif not isinstance(value, OptionExerciseStyle):
+                raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in OptionExerciseStyle]}")
+
+        elif name == "underlying_type":
+            if isinstance(value, str):
+                try:
+                    value = Underlying(value.lower())
+                except ValueError as e:
+                    raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in Underlying]}") from e
+            elif not isinstance(value, Underlying):
+                raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in Underlying]}")
+            if value == Underlying.FX:
+                if not hasattr(self, "rf") or self.rf is None:
+                    raise MissingParameterException("The foreign interest rate (rf) must be defined for FX Options.")
+
+        elif name == "direction":
+            if isinstance(value, str):
+                try:
+                    value = Direction(value.lower())
+                except ValueError as e:
+                    raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in Direction]}") from e
+            elif not isinstance(value, Direction):
+                raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in Direction]}")
+        super().__setattr__(name, value)
+
+
+    def _process_and_validate_inputs(self) -> None:
+        """
+        #! Currently not used
+        Validates specific inputs of an option and converts some to enums if necessary.
+        The method validates the underlying price, strike, time to expiry, volatility type, exercise, underlying, direction,
+
+        Raises
+        -----------
+        InvalidOptionTypeException
+            Raised if the option's type is invalid.
+
+        InvalidOptionExerciseException
+            Raised if the option's exercise is invalid.
+
+        InvalidUnderlyingException
+            Raised if the option's underlying asset is invalid.
+
+        InvalidDirectionException
+            Raised if the option's direction is invalid.
+
+        MissingParameterException
             Raised if a specific variable is not defined or is None. (In this case if the Underlying is FX and rf is None).
 
         ValueError
@@ -122,7 +207,7 @@ class OptionBase(OptionParams, ABC):
         # Specific Input validation for FX Options
         if self.underlying_type == Underlying.FX:
             if not self.rf:
-                raise NameError("The foreign interest rate (rf) must be defined for FX Options.")
+                raise MissingParameterException("The foreign interest rate (rf) must be defined for FX Options.")
 
         if self.s <= 0:
             raise ValueError(f"The underlying's price cannot be negative. Input was {self.s}.")
@@ -192,7 +277,7 @@ class OptionBase(OptionParams, ABC):
 
         Raises
         -----------
-        NameError
+        MissingParameterException
             Raised when the options premium isn't defined.
 
         Returns
@@ -204,7 +289,7 @@ class OptionBase(OptionParams, ABC):
         if self.premium is not None:
             return max(self.premium - self.intrinsic_value, 0)
         else:
-            raise NameError("The option's premium must be defined.")
+            raise MissingParameterException("The option's premium must be defined.")
 
     @abstractmethod
     def profit_at_expiry_variable(self, s: float | None = None, premium: float | None = None, transaction_costs: float | None = None) -> float:

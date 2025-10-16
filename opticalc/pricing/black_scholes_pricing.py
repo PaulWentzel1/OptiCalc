@@ -1,7 +1,12 @@
 from opticalc.pricing.base import PricingBase
+from opticalc.utils.exceptions import MissingParameterException
 
 
 class BlackScholesPricing(PricingBase):
+    """
+    Calculate the value of european-exercise style options using various implementations of the Black-Scholes model.
+    """
+
     def black_scholes_adaptive(self) -> float:
         """
         Return the theoretical value of a european option using the Black-Scholes formula.
@@ -71,7 +76,7 @@ class BlackScholesPricing(PricingBase):
 
         Raises
         -----------
-        ValueError
+        MissingParameterException
             Raised when the foreign interest rate isn't defined
 
         Returns
@@ -83,4 +88,4 @@ class BlackScholesPricing(PricingBase):
             _b = self.r - self.rf
             return self.black_scholes_cost_of_carry(_b)
         else:
-            raise NameError("The foreign interest rate (rf) must be defined.")
+            raise MissingParameterException("The foreign interest rate (rf) must be defined.")

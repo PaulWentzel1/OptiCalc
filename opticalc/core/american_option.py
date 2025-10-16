@@ -119,7 +119,3 @@ class AmericanOption(OptionBase, BjerksundStenslandPricing, BinomialPricing):
     @property
     def at_the_forward_strike(self) -> float:
         return super().at_the_forward_strike
-
-
-if __name__ == "__main__":
-    new_option = AmericanOption(115, 110, 1, 0.03, 0, 0.2, OptionType.Call)

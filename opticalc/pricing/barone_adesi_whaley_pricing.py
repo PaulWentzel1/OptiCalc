@@ -7,6 +7,10 @@ from opticalc.utils.exceptions import InvalidOptionTypeException
 
 
 class BaroneAdesiWhaleyPricing(PricingBase):
+    """
+    Approximate the value of american-exercise style options using the Barone-Adesi & Whaley model .
+    """
+
     def _kc(self, tolerance: float, max_iterations: int) -> float:
         """
         Return the underlying price for american call options above which early exercise is optimal.

@@ -9,6 +9,10 @@ from opticalc.utils.exceptions import InvalidOptionTypeException
 
 
 class BjerksundStenslandPricing(PricingBase):
+    """
+    Approximate the value of american-exercise style options using the Bjerksund-Stensland model .
+    """
+
     def bjerksund_stensland_call_1993(self, s: float, k: float, r: float, b: float) -> float:
         """
         Return the theoretical value of an american call option using the Bjerksund-Stensland approximation model (1993).

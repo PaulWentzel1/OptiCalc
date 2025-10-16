@@ -1,11 +1,14 @@
 from dataclasses import dataclass, field
 
 from opticalc.core.enums import Direction, OptionExerciseStyle, OptionType, Underlying
-
+from opticalc.utils.exceptions import MissingParameterException
 
 @dataclass
 class OptionParams:
-    """Contains the parameters for a Option-type Object"""
+    """
+    OptionParams contains the parameters for a Option-type object and the cost-of-carry logic.
+    This logic is used to determine b based on user input and underlying type.
+    """
     s: float
     k: float
     t: float
@@ -56,9 +59,6 @@ class OptionParams:
         self.direction = direction
         self.underlying_contracts = underlying_contracts
 
-    def get_b(self) -> float | None:
-        return self._override_b
-
     @property
     def b(self) -> float:
         """
@@ -72,7 +72,7 @@ class OptionParams:
 
             elif self.underlying_type == Underlying.FX:
                 if self.rf is None:
-                    raise NameError("The foreign interest rate (rf) must be defined.")
+                    raise MissingParameterException("The foreign interest rate (rf) must be defined.")
                 return self.r - self.rf  # fx options
             else:
                 return self.r - self.q  # equity, index, commodity (spot) options
@@ -85,3 +85,4 @@ class OptionParams:
             self._override_b = b
         else:
             self._override_b = None
+

@@ -7,6 +7,10 @@ from opticalc.utils.exceptions import InvalidOptionTypeException
 
 
 class BachelierPricing(PricingBase):
+    """
+    Calculate the value of european-exercise style options using the Bachelier model .
+    """
+
     def bachelier(self) -> float:
         """
         Return the theoretical value of a european option using the Bachelier model.

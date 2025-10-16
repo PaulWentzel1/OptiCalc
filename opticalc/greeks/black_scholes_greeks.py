@@ -9,6 +9,10 @@ from opticalc.utils.exceptions import InvalidOptionTypeException
 
 
 class BlackScholesGreeks(PricingBase):
+    """
+    Calculate the greeks of european exercise style options.
+    """
+
     @property
     def delta(self) -> float:
         """
@@ -32,8 +36,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised if the option's exercise style isn't supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b))
@@ -62,8 +66,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised if the option's exercise style isn't supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return (self.s ** 2 / self.k) * np.exp((2 * self.b + self.sigma ** 2) * self.t)
@@ -81,11 +85,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The symmetric Delta price.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised if the option's exercise style isn't supported.
         """
         return self.k * np.exp((- self.b - self.sigma ** 2 / 2) * self.t)
 
@@ -109,8 +108,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return self.s * np.exp(-norm.ppf(delta * np.exp((self.r - self.b) * self.t)) * self.sigma * np.sqrt(self.t) + (self.b + self.sigma ** 2 / 2) * self.t)
@@ -139,8 +138,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         delta = delta * np.exp(-self.b * self.t)
         if self.option_type == OptionType.Call:
@@ -164,8 +163,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return np.exp(-self.r * self.t) * norm.cdf(self.d2_cost_of_carry(self.b))
@@ -188,8 +187,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -210,8 +209,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -235,7 +234,7 @@ class BlackScholesGreeks(PricingBase):
         Raises
         -----------
         InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+            Raised when the option's exercise typoe is not recognized or supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -266,8 +265,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised when the option's type is not recognized or supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -283,13 +282,7 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The maximal value of the option's Vanna.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
-
         return self.k * np.exp(-self.b * self.t - self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
 
     @property
@@ -301,11 +294,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The minimal value of the option's Vanna.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.k * np.exp(-self.b * self.t + self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
 
@@ -318,11 +306,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The strike price of the option where Vanna is the lowest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.s * np.exp(self.b * self.t - self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
 
@@ -335,11 +318,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The strike price of the option where Vanna is the highest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.s * np.exp(self.b * self.t + self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
 
@@ -360,8 +338,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -384,8 +362,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return -np.exp((self.b - self.r) * self.t) * (norm.pdf(self.d1_cost_of_carry(self.b)) * ((self.b) / (self.sigma * np.sqrt(self.t)) - (self.d2_cost_of_carry(self.b)) / (2 * self.t)) + (self.b - self.r) * norm.cdf(self.d1_cost_of_carry(self.b)))
@@ -410,8 +388,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b)) * (self.s / self.black_scholes_cost_of_carry(self.b))
@@ -432,11 +410,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The Elasticity of the option.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.sigma * np.abs(self.elasticity)
 
@@ -460,8 +433,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -483,10 +456,9 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
-
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
         else:
@@ -501,11 +473,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The underlying price of the option where Gamma Percent is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.k * np.exp((- self.b - self.sigma ** 2 / 2) * self.t)
 
@@ -518,11 +485,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The strike of the option where Gamma Percent is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.s * np.exp((self.b + self.sigma ** 2 / 2) * self.t)
 
@@ -535,11 +497,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The underlying price of the option where Gamma is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.k * np.exp((- self.b - 3 * self.sigma ** 2 / 2) * self.t)
 
@@ -552,11 +509,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The strike of the option where Gamma is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.s * np.exp((self.b + self.sigma ** 2 / 2) * self.t)
 
@@ -572,10 +524,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+            Invalid option parameters. r < sigma ** 2 + 2b must be true.
         """
-
         if not self.r < self.sigma ** 2 + 2 * self.b:
             raise ValueError("The returned value must be greater than 0 for the saddle point to exist. Therefore r < sigma ** 2 + 2b")
 
@@ -590,11 +540,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
            The underlying price of the option where Gamma has a saddle point.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.k * np.exp((-self.b - 3 * self.sigma ** 2 / 2) * self.gamma_saddle_time)
 
@@ -607,11 +552,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The Gamma found at the saddle point.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return (np.sqrt(np.exp(1) / np.pi) * np.sqrt((2 * self.b - self.r) / self.sigma ** 2 + 1)) / self.k
 
@@ -632,8 +572,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -654,11 +594,6 @@ class BlackScholesGreeks(PricingBase):
             - upper_boundary (float): Upper bound of the range where Zomma is negative.
             - text (str): Description of the negative Zomma or Zomma Percent range.
             - text_alternative (str): Description of the positive Zomma or Zomma Percent range.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         lower_boundary = cast(float, self.k * np.exp(- self.b * self.t - self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2))
         upper_boundary = cast(float, self.k * np.exp(- self.b * self.t + self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2))
@@ -680,11 +615,6 @@ class BlackScholesGreeks(PricingBase):
             - upper_boundary (float): Upper bound of the range where Zomma is negative.
             - text (str): Description of the negative Zomma or Zomma Percent range.
             - text_alternative (str): Description of the positive Zomma or Zomma Percent range.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         lower_boundary = cast(float, self.s * np.exp(self.b * self.t) - self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
         upper_boundary = cast(float, self.s * np.exp(self.b * self.t) + self.sigma * np.sqrt(self.t) * np.sqrt(4 + self.t * self.sigma ** 2) / 2)
@@ -707,8 +637,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -731,8 +661,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -755,8 +685,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -781,8 +711,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -805,8 +735,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -828,8 +758,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -851,8 +781,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -868,11 +798,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The underlying price of the option where Vega is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.k * np.exp((- self.b + self.sigma ** 2 / 2) * self.t)
 
@@ -885,11 +810,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The strike price of the option where Vega is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.s * np.exp((self.b + self.sigma ** 2 / 2) * self.t)
 
@@ -902,11 +822,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The time to maturity of the option where Vega is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return (2 * (1 + np.sqrt(1 + (8 * self.r * (1/self.sigma ** 2) + 1) * np.log(self.s / self.k) ** 2))) / (8 * self.r + self.sigma ** 2)
 
@@ -919,11 +834,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The time to maturity of the option where Vega is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return 1 / (2 * self.r)
 
@@ -936,11 +846,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The underlying price of the option where Vega is greatest.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option type is something else than "call" and "put".
         """
         return self.k * np.exp((-self.b + self.sigma ** 2 / 2) / (2 * self.r))
 
@@ -953,11 +858,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The value of Vega at its global maximum.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.k / (2 * np.sqrt(self.r * np.e * np.pi))
 
@@ -975,11 +875,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The Vega Elasticity of the option.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.vega * self.sigma / self.black_scholes_cost_of_carry(self.b)
 
@@ -1010,8 +905,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -1032,11 +927,6 @@ class BlackScholesGreeks(PricingBase):
             - upper_boundary (float): Upper bound of the range where Vomma is negative.
             - text (str): Description of the negative Vomma or Vomma Percent range.
             - text_alternative (str): Description of the positive Vomma or Vomma Percent range.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         lower_boundary = self.k * np.exp((- self.b - self.sigma ** 2 / 2) * self.t)
         upper_boundary = self.k * np.exp((- self.b + self.sigma ** 2 / 2) * self.t)
@@ -1058,11 +948,6 @@ class BlackScholesGreeks(PricingBase):
             - upper_boundary (float): Upper bound of the range where Vomma is negative.
             - text (str): Description of the negative Vomma or Vomma Percent range.
             - text_alternative (str): Description of the positive Vomma or Vomma Percent range.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
 
         lower_boundary = self.s * np.exp((self.b - self.sigma ** 2 / 2) * self.t)
@@ -1086,8 +971,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -1110,8 +995,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -1136,8 +1021,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -1157,11 +1042,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The Variance Vega of the option.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * (np.sqrt(self.t) / (2 * self.sigma))
 
@@ -1176,11 +1056,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The Variance Vega of the option.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return - self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * (self.d2_cost_of_carry(self.b) / (2 * self.sigma ** 2))
 
@@ -1195,11 +1070,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The Variance Vomma of the option.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return ((self.s * np.exp((self.b - self.r) * self.t) * np.sqrt(self.t)) / (4 * self.sigma ** 3)) * norm.pdf(self.d1_cost_of_carry(self.b)) * (self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - 1)
 
@@ -1214,11 +1084,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         float
             The Variance Ultima of the option.
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
         return ((self.s * np.exp((self.b - self.r) * self.t) * np.sqrt(self.t)) / (8 * self.sigma ** 5)) * norm.pdf(self.d1_cost_of_carry(self.b)) * ((self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - 1) * (self.d1_cost_of_carry(self.b) * self.d2_cost_of_carry(self.b) - 3) - (self.d1_cost_of_carry(self.b) ** 2 + self.d2_cost_of_carry(self.b) ** 2))
 
@@ -1237,8 +1102,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return -((self.s * np.exp((self.b - self.r) * self.t) * norm.pdf(self.d1_cost_of_carry(self.b)) * self.sigma) / (2 * np.sqrt(self.t))) - (self.b - self.r) * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b)) - self.r * self.k * np.exp(-self.r * self.t) * norm.cdf(self.d2_cost_of_carry(self.b))
@@ -1268,10 +1133,7 @@ class BlackScholesGreeks(PricingBase):
         Raises
         -----------
         ValueError
-            Raised when the trading days are negative
-
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+            Raised when the trading days are negative.
         """
         if trading_days < 0:
             raise ValueError(f"The option's trading days '{trading_days}' is not valid, it has to be positive.")
@@ -1291,8 +1153,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -1318,8 +1180,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        ValueError
+            Raised if the number of trading days is invalid
         """
         if trading_days < 0:
             raise ValueError(f"The option's trading days '{trading_days}' is not valid, it has to be positive.")
@@ -1346,9 +1208,6 @@ class BlackScholesGreeks(PricingBase):
         -----------
         ValueError
             Raised when the trading days are negative
-
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
         """
 
         if trading_days < 0:
@@ -1371,8 +1230,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.underlying_type and self.underlying_type == Underlying.Future:
             return -self.t * self.black_scholes_cost_of_carry(self.b)
@@ -1398,8 +1257,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return - self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b))
@@ -1422,8 +1281,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return self.t * self.s * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b))
@@ -1447,8 +1306,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return cast(float, norm.cdf(self.d2_cost_of_carry(self.b)))
@@ -1472,8 +1331,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return - np.exp(- self.r * self.t) * norm.cdf(self.d2_cost_of_carry(self.b))
@@ -1499,8 +1358,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return self.s ** 2 / self.k * np.exp((2 * self.b - self.sigma ** 2) * self.t)
@@ -1528,8 +1387,8 @@ class BlackScholesGreeks(PricingBase):
         ValueError
             Raised when the risk-neutral probability p is invalid.
 
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
 
         if p > 1 or p < 0:
@@ -1555,8 +1414,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return cast(float, -norm.pdf(self.d2_cost_of_carry(self.b)) * (self.d1_cost_of_carry(self.b) / self.sigma))
@@ -1580,8 +1439,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return norm.pdf(self.d2_cost_of_carry(self.b)) * (self.b / (self.sigma * np.sqrt(self.t)) - self.d1_cost_of_carry(self.b) / 2 * self.t)
@@ -1604,8 +1463,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type not in (OptionType.Call, OptionType.Put):
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
@@ -1635,8 +1494,8 @@ class BlackScholesGreeks(PricingBase):
         ValueError
             Raised when the risk-neutral probability p is invalid.
 
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
 
         if p > 1 or p < 0:
@@ -1659,8 +1518,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         z = np.log(self.k / self.s) / self.sigma * np.sqrt(self.t)
         mu = (self.b - self.sigma ** 2 / 2) / self.sigma ** 2
@@ -1684,8 +1543,8 @@ class BlackScholesGreeks(PricingBase):
 
         Raises
         -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
+        InvalidOptionTypeException
+            Raised if the option's type isn't supported.
         """
         if self.option_type == OptionType.Call:
             return -self.s * self.t * np.exp((self.b - self.r) * self.t) * norm.cdf(self.d1_cost_of_carry(self.b))
@@ -1694,18 +1553,3 @@ class BlackScholesGreeks(PricingBase):
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
-    @property
-    def vera(self) -> float:
-        """
-        Return the greek Vera
-
-        Returns
-        -----------
-        The greek .
-
-        Raises
-        -----------
-        InvalidOptionExerciseException
-            Raised when the option's exercise style is not recognized or supported.
-        """
-        raise NotImplementedError("Vera hasn't been finished")

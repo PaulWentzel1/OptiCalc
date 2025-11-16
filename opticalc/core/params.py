@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from opticalc.core.enums import Direction, OptionExerciseStyle, OptionType, Underlying
+from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 from opticalc.utils.exceptions import MissingParameterException
 
 @dataclass
@@ -16,7 +16,7 @@ class OptionParams:
     q: float
     sigma: float
     option_type: OptionType | str
-    exercise_style: OptionExerciseStyle | str
+    exercise_style: ExerciseStyle | str
     _override_b: float | None = field(repr=False)
     rf: float | None = None
     premium: float | None = None
@@ -34,7 +34,7 @@ class OptionParams:
         q: float,
         sigma: float,
         option_type: OptionType | str,
-        exercise_style: OptionExerciseStyle | str,
+        exercise_style: ExerciseStyle | str,
         b: float | None = None,
         rf: float | None = None,
         premium: float | None = None,
@@ -77,12 +77,16 @@ class OptionParams:
             else:
                 return self.r - self.q  # equity, index, commodity (spot) options
 
-    def modify_cost_of_carry(self, b: float | None = None) -> None:
+    @b.setter
+    def b(self, value: float | None) -> None:
         """
-        Modify the cost of carry with a custom value. Useful for exotic options or plotting changes in cost of carry.
+        Sets the cost-of-carry rate b to a customized value.
         """
-        if b is not None:
-            self._override_b = b
-        else:
-            self._override_b = None
+        self._override_b = value
+
+    @property
+    def reset_b(self) -> None:
+        """Reset the cost-of-carry rate b."""
+        self._override_b = None
+
 

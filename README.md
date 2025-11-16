@@ -42,7 +42,7 @@ new_american_option = op.Option(s = 200,
                                 q = 0.05,
                                 sigma = 0.15,
                                 option_type = "put",
-                                exercise_style = op.OptionExerciseStyle.American,
+                                exercise_style = op.ExerciseStyle.American,
                                 b = None,
                                 rf = 0.02,
                                 premium = 5.5,
@@ -68,10 +68,10 @@ option.option_type = "Call"
 print(option.option_type)  # Output: op.OptionType.Call
 
 option.exercise_style = "european"
-print(option.exercise_style)  # Output: op.OptionExerciseStyle.European
+print(option.exercise_style)  # Output: op.ExerciseStyle.European
 
 option.exercise_style = "BERMUDA"
-print(option.exercise_style)  # Output: op.OptionExerciseStyle.Bermuda
+print(option.exercise_style)  # Output: op.ExerciseStyle.Bermuda
 
 option.underlying_type = op.Underlying.FX
 print(option.underlying_type)  # Output: op.Underlying.FX
@@ -173,17 +173,18 @@ Since ```b``` is not explicitly defined when initializing the object, currently 
 ```py
 print(new_option.b)  # Output: 0.03
 ```
-Should the user want to, one can also modify ```b``` by calling ```modify_cost_of_carry(...)```. If no input is given for modify_cost_of_carry(...), then ```b``` will simply default back the appropriate value based on the underlying or ```r - q``` in the default case.
+Should the user want to, one can also modify ```b``` by simply assigning a new value to ```b```. This will assign ```b``` a custom value which will means in future calls, no autocalculation based on the underlying will take place.
+This new value can simply be removed by calling the property ```reset_b``` which will result in ```b``` simply falling back to appropriate value based on the underlying or ```r - q``` in the default case.
 
 ```py
-new_option.modify_cost_of_carry(0.05)
+new_option.b = 0.05
 print(new_option.b)  # Output after modification: 0.05
 
-new_option.modify_cost_of_carry()
+new_option.reset_b
 print(new_option.b) # Output: 0.03
 
 new_option.underlying_type = op.Underlying.Future
-new_option.modify_cost_of_carry()
+new_option.reset_b
 print(new_option.b) # Output: 0.00
 ```
 
@@ -230,7 +231,7 @@ OptiCalc is released under a **[MIT License](LICENSE)**
 ## Roadmap
 As OptiCalc is still under development, many features are still work-in progress and will be implemented in a similar order following the outline below:
 - New pricing modules
-    - Longstaff Schwarz
+    - Longstaff-Schwartz 
     - Heston
     - Merton Jump Diffusion
     - Variance Gamma
@@ -240,7 +241,8 @@ As OptiCalc is still under development, many features are still work-in progress
 - Implied volatility solver
 - Testing
 - Proper documentation
-- Extend support for exotic options (Bermuda, Asian, Barrier, Basket...)
+- Bermuda exercise for options
+- Extend support for exotic options (Asian, Barrier, Basket...)
 - Global settings class for constants etc.
 - Plotting (Payoff graphs, Greeks)
 - OptionStrategy class (Allows for the combination of several options)

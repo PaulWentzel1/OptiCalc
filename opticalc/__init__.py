@@ -1,4 +1,6 @@
-
+"""
+Test
+"""
 from opticalc.core.option import (
     Option
 )
@@ -13,7 +15,7 @@ from opticalc.core.american_option import (
 
 from opticalc.core.enums import (
     OptionType,
-    OptionExerciseStyle,
+    ExerciseStyle,
     Underlying,
     Direction,
 )
@@ -23,7 +25,7 @@ __all__ = [
     "EuropeanOption",
     "AmericanOption",
     "OptionType",
-    "OptionExerciseStyle",
+    "ExerciseStyle",
     "Underlying",
     "Direction"
 ]

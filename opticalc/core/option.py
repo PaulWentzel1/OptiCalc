@@ -1,13 +1,13 @@
-from opticalc.core.base import OptionBase
-from opticalc.core.enums import Direction, OptionExerciseStyle, OptionType, Underlying
+from opticalc.core.vanilla_base import VanillaOptionBase
+from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
 from opticalc.core.american_option import AmericanOption
 from opticalc.core.european_option import EuropeanOption
 
-from opticalc.utils.exceptions import InvalidOptionExerciseException
+from opticalc.utils.exceptions import InvalidExerciseException
 
 
-class Option(OptionBase):
+class Option(VanillaOptionBase):
     """
     A generalized option. The class will change type into a EuropeanOption, AmericanOption etc. based on the input given for
     exercise_style
@@ -37,9 +37,9 @@ class Option(OptionBase):
     option_type : OptionType or str
         The Option type. Valid: call, put, OptionType.Call, OptionType.Put
 
-    exercise_style : OptionExerciseStyle or str
+    exercise_style : ExerciseStyle or str
         The exercise style of the option. Valid: european, american, bermuda, asian,
-        OptionExerciseStyle.European, OptionExerciseStyle.American etc.
+        ExerciseStyle.European, ExerciseStyle.American etc.
 
     b : float or None, default None
         The cost of carry rate.
@@ -68,7 +68,7 @@ class Option(OptionBase):
             q: float,
             sigma: float,
             option_type: OptionType | str,
-            exercise_style: OptionExerciseStyle | str,
+            exercise_style: ExerciseStyle | str,
             b: float | None = None,
             rf: float | None = None,
             premium: float | None = None,
@@ -90,7 +90,7 @@ class Option(OptionBase):
         AmericanOption or EuropeanOption
             The appropriate option subclass.
         """
-        if isinstance(exercise_style, OptionExerciseStyle):
+        if isinstance(exercise_style, ExerciseStyle):
             style_str = exercise_style.value.lower()
         else:
             style_str = str(exercise_style).lower()
@@ -130,8 +130,8 @@ class Option(OptionBase):
                 underlying_contracts=underlying_contracts,
             )
         else:
-            raise InvalidOptionExerciseException(f"Invalid input '{exercise_style}'. Valid inputs for exercise_style"
-                                                 f" are: {[element.value for element in OptionExerciseStyle]}")
+            raise InvalidExerciseException(f"Invalid input '{exercise_style}'. Valid inputs for exercise_style"
+                                                 f" are: {[element.value for element in ExerciseStyle]}")
 
     @property
     def intrinsic_value(self) -> float: ...

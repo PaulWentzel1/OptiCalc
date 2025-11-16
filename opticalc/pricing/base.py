@@ -1,109 +1,66 @@
-from typing import Any
+from typing import Callable, TypeVar, cast, Any, ParamSpec
+from collections.abc import Callable
 
 import numpy as np
 from scipy.stats import norm  # type: ignore
 
-from opticalc.core.enums import OptionType, OptionExerciseStyle
+from opticalc.core.enums import OptionType, ExerciseStyle
 from opticalc.core.params import OptionParams
-from opticalc.utils.exceptions import InvalidOptionTypeException, InvalidOptionExerciseException, UnsupportedModelException
+from opticalc.utils.exceptions import InvalidOptionTypeException, UnsupportedModelException
 
+T = TypeVar('T', bound='PricingBase')
+P = ParamSpec('P')
+R = TypeVar('R')
 
 class PricingBase(OptionParams):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
 
-    def validate_pricing_model(self, method_name: str):
-        """
-        Used to validate if a specific model pricing can be used on a option.
+    @staticmethod
+    def european_only(func: Callable[P, R]) -> Callable[P, R]:
+        """Decorator used to denote pricing models or methods only applicable to european exercise-style option."""
+        def wrapper(self: T, *args: Any, **kwargs: Any) -> R:  # type: ignore
+            if not self.exercise_style == ExerciseStyle.European:
+                exercise = (self.exercise_style.value if isinstance(self.exercise_style, ExerciseStyle)
+                            else self.exercise_style)
 
-        Parameters
-        -----------
-        function_name : str
-            Name of the method to validate.
-
-        Raises
-        -----------
-        UnsupportedModelException
-            Raised if the intended model doesn't support the option's exercise.
-
-        InvalidOptionExerciseException
-            Raised if the option's exercise style isn't supported.
-        """
-
-        valid_european = [
-            "black_scholes_adaptive",
-            "black_scholes",
-            "black_scholes_merton",
-            "black_76",
-
-            "bachelier",
-            "bachelier_modified",
-
-            "universal_binomial_tree",
-            "binomial_cox_ross_rubinstein",
-            "binomial_cox_ross_rubinstein_drift",
-            "binomial_rendleman_bartter",
-            "binomial_leisen_reimer",
-            "binomial_jarrow_rudd",
-            "binomial_jarrow_rudd_risk_neutral",
-            "binomial_tian"]
-
-        if self.rf is not None:
-            valid_european.append("garman_kohlhagen")
-
-        valid_american = [
-            "universal_binomial_tree"
-            "binomial_cox_ross_rubinstein",
-            "binomial_cox_ross_rubinstein_drift",
-            "binomial_rendleman_bartter",
-            "binomial_leisen_reimer",
-            "binomial_jarrow_rudd",
-            "binomial_jarrow_rudd_risk_neutral",
-            "binomial_tian",
-
-            "bjerksund_stensland_call_1993",
-            "bjerksund_stensland_1993",
-            "bjerksund_stensland_call_2002",
-            "bjerksund_stensland_2002",
-            "bjerksund_stensland_combined",
-
-            "barone_adesi_whaley"]
-
-        valid_bermuda = []
-
-        valid_asian = []
-
-        exercise = self.exercise_style.value if isinstance(self.exercise_style, OptionExerciseStyle) else self.exercise_style
-
-        if self.b == 0:
-            valid_european.append("vega_black_76_max_time")
-
-        if self.exercise_style == OptionExerciseStyle.European:
-            if method_name not in valid_european:
                 raise UnsupportedModelException(
-                    f"{method_name} is not usable for European-style options. "
+                    f"{func.__name__} is only usable for European-style options. "
                     f"The current option has a {exercise}-style exercise.")
+            return func(self, *args, **kwargs)  # type: ignore
+        return cast(Callable[..., R], wrapper)
 
-        elif self.exercise_style == OptionExerciseStyle.American:
-            if method_name not in valid_american:
+    @staticmethod
+    def american_only(func: Callable[P, R]) -> Callable[P, R]:
+        """Decorator used to denote pricing models or methods only applicable to american exercise-style option."""
+        def wrapper(self: T, *args: Any, **kwargs: Any) -> R:  # type: ignore
+            if not self.exercise_style == ExerciseStyle.American:
+                exercise = (self.exercise_style.value if isinstance(self.exercise_style, ExerciseStyle)
+                            else self.exercise_style)
+
                 raise UnsupportedModelException(
-                    f"{method_name} is not usable for American-style options. "
+                    f"{func.__name__} is only usable for American-style options. "
                     f"The current option has a {exercise}-style exercise.")
+            return func(self, *args, **kwargs)  # type: ignore
+        return cast(Callable[..., R], wrapper)
 
-        elif self.exercise_style == OptionExerciseStyle.Bermuda:
-            if method_name not in valid_bermuda:
-                raise UnsupportedModelException(
-                    f"{method_name} is not usable for Bermuda-style options. "
-                    f"The current option has a {exercise}-style exercise.")
+    @staticmethod
+    def exercises_only(exercises_allowed: list[ExerciseStyle]):
+        """Decorator used to denote pricing models or methods only applicable to specificed exercise-style options."""
+        @staticmethod
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            def wrapper(self: T, *args: Any, **kwargs: Any) -> R:  # type: ignore
+                if not self.exercise_style in exercises_allowed:
+                    exercise = (self.exercise_style.value if isinstance(self.exercise_style, ExerciseStyle)
+                            else self.exercise_style)
+                    reformat_exercise_list = list(map(lambda x: x.value, exercises_allowed))
 
-        elif self.exercise_style == OptionExerciseStyle.Asian:
-            if method_name not in valid_asian:
-                raise UnsupportedModelException(
-                    f"{method_name} is not usable for Asian-style options. "
-                    f"The current option has a {exercise}-style exercise.")
-
-        else:
-            raise InvalidOptionExerciseException(f"The option's exercise type '{exercise}' is not valid.")
+                    raise UnsupportedModelException(
+                        f"{func.__name__} is only usable for {', '.join(reformat_exercise_list)}-style options. "
+                        f"The current option has a {exercise}-style exercise.")
+                return func(self, *args, **kwargs)  # type: ignore
+            return cast(Callable[..., R], wrapper)
+        return decorator
 
     def method_class(self, method_name: str) -> str | None:
         """
@@ -128,11 +85,6 @@ class PricingBase(OptionParams):
         """
         Return the d1 parameter used in the Black-Scholes formula among others.
 
-        Parameters
-        -----------
-        b : float
-            The cost of carry rate, which is determined by the given pricing model.
-
         Returns
         -----------
         float
@@ -144,11 +96,6 @@ class PricingBase(OptionParams):
     def d2(self) -> float:
         """
         Return the d2 parameter used in the Black-Scholes formula among others.
-
-        Parameters
-        -----------
-        b : float
-            The cost of carry rate, which is determined by the given pricing model.
 
         Returns
         -----------
@@ -208,6 +155,7 @@ class PricingBase(OptionParams):
         InvalidOptionTypeException
             Raised when the option type is something else than "call" and "put".
         """
+
         d1 = self.d1_cost_of_carry(b)
         d2 = self.d2_cost_of_carry(b)
 

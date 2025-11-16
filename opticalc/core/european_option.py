@@ -1,5 +1,8 @@
-from opticalc.core.base import OptionBase
-from opticalc.core.enums import Direction, OptionExerciseStyle, OptionType, Underlying
+import numpy as np
+from scipy.stats import norm  # type: ignore
+
+from opticalc.core.vanilla_base import VanillaOptionBase
+from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
 from opticalc.greeks.black_scholes_greeks import BlackScholesGreeks
 
@@ -7,8 +10,9 @@ from opticalc.pricing.bachelier_pricing import BachelierPricing
 from opticalc.pricing.binomial_pricing import BinomialPricing
 from opticalc.pricing.black_scholes_pricing import BlackScholesPricing
 
+from opticalc.utils.constants import CALL_PUT_PARITY_THRESHOLD
 
-class EuropeanOption(OptionBase, BlackScholesPricing, BinomialPricing, BachelierPricing, BlackScholesGreeks):
+class EuropeanOption(VanillaOptionBase, BlackScholesPricing, BinomialPricing, BachelierPricing, BlackScholesGreeks):
     """
     A European-exercise style option. European options can only be exercised at the end of their maturity, contrary to
     american or bermuda options.
@@ -81,7 +85,7 @@ class EuropeanOption(OptionBase, BlackScholesPricing, BinomialPricing, Bachelier
             q=q,
             sigma=sigma,
             option_type=option_type,
-            exercise_style=OptionExerciseStyle.European,
+            exercise_style=ExerciseStyle.European,
             b=b,
             rf=rf,
             premium=premium,
@@ -122,3 +126,38 @@ class EuropeanOption(OptionBase, BlackScholesPricing, BinomialPricing, Bachelier
     @property
     def at_the_forward_strike(self) -> float:
         return super().at_the_forward_strike
+
+    @property
+    def call_put_parity(self) -> float:
+        """
+        Return value of the opposite option (Inverse option type) needed for the Call-Put parity to be true.
+        Current option: Call -> Put value
+        Current option: Put  -> Call value
+
+        Returns
+        -----------
+        float
+            The value of the identical option with opposite option type.
+        """
+
+        if self.option_type == OptionType.Call:
+            call_value = self.black_scholes_adaptive()
+            put_value = (self.k * np.exp(-self.r * self.t) * norm.cdf(-self.d2) - self.s
+                         * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1))
+            parity_value = put_value + self.s * np.exp((self.b - self.r) * self.t) - self.k * np.exp(-self.r * self.t)
+
+            if round(call_value, CALL_PUT_PARITY_THRESHOLD) == round(parity_value, CALL_PUT_PARITY_THRESHOLD):
+                return put_value
+            else:
+                raise ValueError("The Call-Put-Parity is not valid. Check parameters for invalid inputs.")
+
+        else:
+            call_value = (self.s * norm.cdf(self.d1) * np.exp((self.b - self.r) * self.t)
+                          - self.k * np.exp(-self.r * self.t) * norm.cdf(self.d2))
+            put_value = self.black_scholes_adaptive()
+            parity_value = call_value - self.s * np.exp((self.b - self.r) * self.t) + self.k * np.exp(-self.r * self.t)
+
+            if round(put_value, CALL_PUT_PARITY_THRESHOLD) == round(parity_value, CALL_PUT_PARITY_THRESHOLD):
+                return call_value
+            else:
+                raise ValueError("The Call-Put-Parity is not valid. Check parameters for invalid inputs.")

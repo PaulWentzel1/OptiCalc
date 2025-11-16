@@ -13,6 +13,7 @@ class BjerksundStenslandPricing(PricingBase):
     Approximate the value of american-exercise style options using the Bjerksund-Stensland model .
     """
 
+    @PricingBase.american_only
     def bjerksund_stensland_call_1993(self, s: float, k: float, r: float, b: float) -> float:
         """
         Return the theoretical value of an american call option using the Bjerksund-Stensland approximation model (1993).
@@ -66,6 +67,7 @@ class BjerksundStenslandPricing(PricingBase):
                         - k * _phi(b=b, gamma=0, h=i, i=i, s=s, r=r, t=self.t, sigma=self.sigma)
                         + k * _phi(b=b, gamma=0, h=k, i=i, s=s, r=r, t=self.t, sigma=self.sigma))
 
+    @PricingBase.american_only
     def bjerksund_stensland_1993(self) -> float:
         """
         Return the theoretical value of an american option using the Bjerksund-Stensland approximation model (1993).
@@ -100,6 +102,7 @@ class BjerksundStenslandPricing(PricingBase):
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
+    @PricingBase.american_only
     def bjerksund_stensland_call_2002(self, s: float, k: float, r: float, b: float) -> float:
         """
         Return the theoretical value of an american call option using the Bjerksund-Stensland approximation model (2002).
@@ -156,6 +159,7 @@ class BjerksundStenslandPricing(PricingBase):
                     - k * _psi(s=s, t2=self.t, gamma=0, h=i1, i2=i2, i1=i1, t1=t1, r=r, b=b, sigma=self.sigma) + k * _psi(s=s, t2=self.t, gamma=0, h=k, i2=i2, i1=i1, t1=t1, r=r, b=b, sigma=self.sigma)
                 )
 
+    @PricingBase.american_only
     def bjerksund_stensland_2002(self) -> float:
         """
         Return the theoretical value of an american option using the Bjerksund-Stensland approximation model (2002).
@@ -190,6 +194,7 @@ class BjerksundStenslandPricing(PricingBase):
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
+    @PricingBase.american_only
     def bjerksund_stensland_combined(self) -> float:
         """
         Return the theoretical value of an american option using both Bjerksund-Stensland approximation models (1993 and

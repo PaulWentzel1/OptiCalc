@@ -1,11 +1,12 @@
-from opticalc.core.base import OptionBase
-from opticalc.core.enums import Direction, OptionExerciseStyle, OptionType, Underlying
+from opticalc.core.vanilla_base import VanillaOptionBase
+from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
 from opticalc.pricing.bjerksund_stensland_pricing import BjerksundStenslandPricing
 from opticalc.pricing.binomial_pricing import BinomialPricing
+from opticalc.pricing.barone_adesi_whaley_pricing import BaroneAdesiWhaleyPricing
 
 
-class AmericanOption(OptionBase, BjerksundStenslandPricing, BinomialPricing):
+class AmericanOption(VanillaOptionBase, BjerksundStenslandPricing, BinomialPricing, BaroneAdesiWhaleyPricing):
     """
     A American-exercise style option. American options can be exercised at any point until the end of their maturity,
     contrary to european or bermuda options.
@@ -78,7 +79,7 @@ class AmericanOption(OptionBase, BjerksundStenslandPricing, BinomialPricing):
             q=q,
             sigma=sigma,
             option_type=option_type,
-            exercise_style=OptionExerciseStyle.American,
+            exercise_style=ExerciseStyle.American,
             b=b,
             rf=rf,
             premium=premium,

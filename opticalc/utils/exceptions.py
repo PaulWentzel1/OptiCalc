@@ -3,13 +3,13 @@ class InvalidOptionTypeException(Exception):
     ...
 
 
-class InvalidOptionExerciseException(Exception):
+class InvalidExerciseException(Exception):
     """Invalid opiton exercise."""
     ...
 
 
 class UnsupportedModelException(Exception):
-    """Priicing model is not supported."""
+    """Pricing model is not supported."""
     ...
 
 

@@ -7,6 +7,7 @@ class BlackScholesPricing(PricingBase):
     Calculate the value of european-exercise style options using various implementations of the Black-Scholes model.
     """
 
+    @PricingBase.european_only
     def black_scholes_adaptive(self) -> float:
         """
         Return the theoretical value of a european option using the Black-Scholes formula.
@@ -26,6 +27,7 @@ class BlackScholesPricing(PricingBase):
         """
         return self.black_scholes_cost_of_carry(self.b)
 
+    @PricingBase.european_only
     def black_scholes(self) -> float:
         """
         Return the theoretical value of a european option using the Black-Scholes formula.
@@ -39,6 +41,7 @@ class BlackScholesPricing(PricingBase):
         _b = self.r
         return self.black_scholes_cost_of_carry(_b)
 
+    @PricingBase.european_only
     def black_scholes_merton(self) -> float:
         """
         Return the theoretical value of a european option using the Black-Scholes-Merton formula.
@@ -53,6 +56,7 @@ class BlackScholesPricing(PricingBase):
         _b = self.r - self.q
         return self.black_scholes_cost_of_carry(_b)
 
+    @PricingBase.european_only
     def black_76(self) -> float:
         """
         Return the theoretical value of a european option using the Black formula (Sometimes known as the Black-76 Model).
@@ -68,6 +72,7 @@ class BlackScholesPricing(PricingBase):
         _b = 0
         return self.black_scholes_cost_of_carry(_b)
 
+    @PricingBase.european_only
     def garman_kohlhagen(self) -> float:
         """
         Return the theoretical value of a european option using the Garman-Kohlhagen formula, which differentiates itself by

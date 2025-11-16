@@ -3,14 +3,14 @@ from typing import cast
 import numpy as np
 
 from opticalc.pricing.base import PricingBase
-from opticalc.core.enums import OptionExerciseStyle, OptionType
+from opticalc.core.enums import ExerciseStyle, OptionType
 
 
 class BinomialPricing(PricingBase):
     """
     Calculate the value of american-exercise style options using various implementations of the Binomial Tree model.
     """
-
+    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
     def universal_binomial_tree(self, up_factor: float, down_factor: float, p: float, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, where inputs such as the up- and
@@ -87,7 +87,7 @@ class BinomialPricing(PricingBase):
                 # Calculate continuation value (expected discounted future value)
                 continuation_value = cast(float, np.exp(-self.r * dt) * (p * option_values[i] + (1 - p) * option_values[i + 1]))
 
-                if self.exercise_style == OptionExerciseStyle.European:
+                if self.exercise_style == ExerciseStyle.European:
                     option_values[i] = continuation_value  # European option, can only be exercised at maturity
                 else:  # American option
                     current_price = self.s * (up_factor ** (step - i)) * (down_factor ** i)
@@ -98,6 +98,7 @@ class BinomialPricing(PricingBase):
 
         return cast(float, option_values[0])
 
+    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
     def binomial_cox_ross_rubinstein(self, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, based on the Cox-Ross-Rubinstein model.
@@ -124,6 +125,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
+    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
     def binomial_cox_ross_rubinstein_drift(self, n: int, drift: float) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, based on a
@@ -153,6 +155,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
+    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
     def binomial_rendleman_bartter(self, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, based on the Rendleman-Bartter model.
@@ -181,6 +184,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
+    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
     def binomial_leisen_reimer(self, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, based on the Leisen-Reimer model.
@@ -208,6 +212,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
+    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
     def binomial_jarrow_rudd(self, n: int) -> float:
         """
         Return the theoretical value of an option using a binomial tree based on the Jarrow-Rudd model.
@@ -239,6 +244,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
+    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
     def binomial_jarrow_rudd_risk_neutral(self, n: int) -> float:
         """
         Return the theoretical value of an option using a binomial tree based on a modified version of the Jarrow-Rudd model.
@@ -263,6 +269,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
+    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
     def binomial_tian(self, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree  based on the Tian (1993) model.

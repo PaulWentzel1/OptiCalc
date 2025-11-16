@@ -1,34 +1,47 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Tuple
 
+import matplotlib.figure
+import matplotlib.pyplot as plt
 import numpy as np
 
-from opticalc.core.enums import Direction, OptionExerciseStyle, OptionType, Underlying
+from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 from opticalc.core.params import OptionParams
-from opticalc.core.constants import ATM_THRESHOLD, AT_FORWARD_THRESHOLD
+from opticalc.utils.constants import (ATM_THRESHOLD,
+                                      AT_FORWARD_THRESHOLD,
+                                      PLOT_LOWER_THRESHOLD_MULTIPLIER,
+                                      PLOT_UPPER_THRESHOLD_MULTIPLIER,
+                                      INDICATOR_LINE_LINESTYLE,
+                                      INDICATOR_LINE_ALPHA,
+                                      INDICATOR_LINE_LINEWIDTH,
+                                      PLOT_FONT_SIZE_MAIN,
+                                      PLOT_FONT_WEIGHT_MAIN,
+                                      PLOT_FONT_SIZE_LEGEND,
+                                      PLOT_LINE_WIDTH)
 from opticalc.utils.exceptions import (InvalidDirectionException,
-                                       InvalidOptionExerciseException,
+                                       InvalidExerciseException,
                                        InvalidOptionTypeException,
                                        InvalidUnderlyingException,
                                        MissingParameterException)
 
 
-class OptionBase(OptionParams, ABC):
+class VanillaOptionBase(OptionParams, ABC):
     """
-    OptionBase contains the core methods and logic for an Option-type object, such as input validation and dunder methods.
-    The class inherits from OptionParams to accommodate the option's parameters or "input".
+    OptionBase contains the core methods and logic for a vanilla Option-type object, such as input validation and
+    dunder methods. The class inherits from OptionParams to accommodate the option's parameters or "input".
 
     Some methods are defined as abstractmethods, this is to accommodate for them being overwritten or modified in child
-    objects like EuropeanOption, AmericanOption and BermudaOption as these might contain special cases (especially for exotic
-    options) where the current, vanilla implementation in OptionBase is invalid.
+    objects like EuropeanOption, AmericanOption and others as these might contain special cases where the current,
+    vanilla implementation in VanillaOptionBase is invalid.
     """
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
 
-        #self._process_and_validate_inputs()  # Input validation and processing
-
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(s={self.s}, k={self.k}, t={self.t}, r={self.r}, q={self.q}, sigma={self.sigma}, option_type={self.option_type}, exercise_style={self.exercise_style}, b={self.b}, rf={self.rf}, premium={self.premium},transaction_costs={self.transaction_costs}, underlying_type={self.underlying_type}, direction={self.direction})"
+        return (f"{self.__class__.__name__}(s={self.s}, k={self.k}, t={self.t}, r={self.r}, q={self.q}, sigma={self.sigma}, "
+                f"option_type={self.option_type}, exercise_style={self.exercise_style}, b={self.b}, rf={self.rf}, "
+                f"premium={self.premium},transaction_costs={self.transaction_costs}, underlying_type={self.underlying_type},"
+                f" direction={self.direction})")
 
     def __str__(self) -> str:
         """
@@ -39,31 +52,31 @@ class OptionBase(OptionParams, ABC):
         str
             Basic information about the option and its given parameters.
         """
+        return_msg = ""
 
-        _option_direction = str(self.direction.value) + " " if isinstance(self.direction, Direction) else ""
-        _exercise = self.exercise_style.value if isinstance(self.exercise_style, OptionExerciseStyle) else self.exercise_style
-        _type = self.option_type.value if isinstance(self.option_type, OptionType) else self.option_type
-        _contracts = f" with {str(self.underlying_contracts)} underlying contracts." if self.underlying_contracts is not None else "."
-        _underlying = f"The option's underlying is of type {self.underlying_type.value if isinstance(self.underlying_type, Underlying) else self.underlying_type}.\n" if self.underlying_type is not None else ""
-        _rf = f"Interest rate (foreign): {str(self.rf)}\n" if self.rf is not None else ""
-        _premium = f"The option currently trades at a premium of {self.premium}" if self.premium is not None else ""
-        _transaction = f"The transaction costs associated with trading: {self.transaction_costs}" if self.transaction_costs is not None else ""
+        direction = str(self.direction.value) + " " if isinstance(self.direction, Direction) else ""
+        exercise = self.exercise_style.value if isinstance(self.exercise_style, ExerciseStyle) else self.exercise_style
+        option_type = self.option_type.value if isinstance(self.option_type, OptionType) else self.option_type
+        contracts = f" with {str(self.underlying_contracts)} underlying contracts." if self.underlying_contracts is not None else "."
+        underlying = f"The option's underlying is of type " f"{self.underlying_type.value if isinstance(self.underlying_type, Underlying) else self.underlying_type}.\n" if self.underlying_type is not None else ""
+        foreign_interest_rate = f"Interest rate (foreign): {str(self.rf)}\n" if self.rf is not None else ""
+        premium = f"\nThe option currently trades at a premium of {self.premium}" if self.premium is not None else ""
+        transaction = f"\nTransaction costs: {self.transaction_costs}" if self.transaction_costs is not None else ""
 
-        return (
-            f"This is a {_option_direction}{_exercise}-style {_type} option{_contracts}\n"
-            f"{_underlying}"
-            f"Spot price of the underlying asset: {self.s}\n"
-            f"Strike price: {self.k}\n"
-            f"Time to expiry: {self.t}\n"
-            f"Interest rate (domestic): {self.r}\n"
-            f"{_rf}"
-            f"Dividend yield: {self.q}\n"
-            f"Volatility: {self.sigma}\n"
-            f"The option's cost of carry rate is {self.b}\n"
-            f"{_premium}"
-            f"{_transaction}"
-        )
+        return_msg += f"This is a {direction}{exercise}-exercise {option_type} option{contracts}\n"
+        return_msg += underlying
+        return_msg += f"Spot price of the underlying: {self.s}\n"
+        return_msg += f"Strike price: {self.k}\n"
+        return_msg += f"Time to expiry: {self.t}\n"
+        return_msg += f"Volatility: {self.sigma}\n"
+        return_msg += f"Interest rate (domestic): {self.r}\n"
+        return_msg += foreign_interest_rate
+        return_msg += f"Dividend yield: {self.q}\n"
+        return_msg += f"Cost of carry rate: {self.b}"
+        return_msg += premium
+        return_msg += transaction
 
+        return return_msg
 
     def __setattr__(self, name: str, value: Any):
         """
@@ -107,44 +120,49 @@ class OptionBase(OptionParams, ABC):
         elif name == "exercise_style":
             if isinstance(value, str):
                 try:
-                    value = OptionExerciseStyle(value.lower())
+                    value = ExerciseStyle(value.lower())
                 except ValueError as e:
-                    raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
-                                                     f" are: {[element.value for element in OptionExerciseStyle]}") from e
-            elif not isinstance(value, OptionExerciseStyle):
-                raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
-                                                     f" are: {[element.value for element in OptionExerciseStyle]}")
+                    raise InvalidExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in ExerciseStyle]}") from e
+            elif not isinstance(value, ExerciseStyle):
+                raise InvalidExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in ExerciseStyle]}")
 
         elif name == "underlying_type":
-            if isinstance(value, str):
-                try:
-                    value = Underlying(value.lower())
-                except ValueError as e:
-                    raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
-                                                     f" are: {[element.value for element in Underlying]}") from e
-            elif not isinstance(value, Underlying):
-                raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
-                                                     f" are: {[element.value for element in Underlying]}")
-            if value == Underlying.FX:
-                if not hasattr(self, "rf") or self.rf is None:
-                    raise MissingParameterException("The foreign interest rate (rf) must be defined for FX Options.")
+            if not value:
+                pass
+            else:
+                if isinstance(value, str):
+                    try:
+                        value = Underlying(value.lower())
+                    except ValueError as e:
+                        raise MissingParameterException(f"Invalid input '{value}'. Valid inputs for underlying_type"
+                                                        f" are: {[element.value for element in Underlying]}") from e
+                elif not isinstance(value, Underlying):
+                    raise MissingParameterException(f"Invalid input '{value}'. Valid inputs for underlying_type"
+                                                        f" are: {[element.value for element in Underlying]}")
+                if value == Underlying.FX:
+                    if not hasattr(self, "rf") or self.rf is None:
+                        raise MissingParameterException("The foreign interest rate (rf) must be defined for FX Options.")
 
         elif name == "direction":
-            if isinstance(value, str):
-                try:
-                    value = Direction(value.lower())
-                except ValueError as e:
-                    raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
-                                                     f" are: {[element.value for element in Direction]}") from e
-            elif not isinstance(value, Direction):
-                raise InvalidOptionExerciseException(f"Invalid input '{value}'. Valid inputs for exercise_style"
-                                                     f" are: {[element.value for element in Direction]}")
+            if not value:
+                pass
+            else:
+                if isinstance(value, str):
+                    try:
+                        value = Direction(value.lower())
+                    except ValueError as e:
+                        raise InvalidDirectionException(f"Invalid input '{value}'. Valid inputs for direction"
+                                                        f" are: {[element.value for element in Direction]}") from e
+                elif not isinstance(value, Direction):
+                    raise InvalidDirectionException(f"Invalid input '{value}'. Valid inputs for direction"
+                                                        f" are: {[element.value for element in Direction]}")
         super().__setattr__(name, value)
 
-
     def _process_and_validate_inputs(self) -> None:
+        # ! Currently not used
         """
-        #! Currently not used
         Validates specific inputs of an option and converts some to enums if necessary.
         The method validates the underlying price, strike, time to expiry, volatility type, exercise, underlying, direction,
 
@@ -180,10 +198,10 @@ class OptionBase(OptionParams, ABC):
         # Input validation for exercise_style
         if isinstance(self.exercise_style, str):
             try:
-                self.exercise_style = OptionExerciseStyle(self.exercise_style.lower())
+                self.exercise_style = ExerciseStyle(self.exercise_style.lower())
             except ValueError as e:
-                raise InvalidOptionExerciseException(f"Invalid input '{self.exercise_style}'. Valid inputs for exercise_style"
-                                                     f" are: {[element.value for element in OptionExerciseStyle]}") from e
+                raise InvalidExerciseException(f"Invalid input '{self.exercise_style}'. Valid inputs for exercise_style"
+                                                     f" are: {[element.value for element in ExerciseStyle]}") from e
 
         # Input validation for underlying_type
         if self.underlying_type is not None:
@@ -244,6 +262,99 @@ class OptionBase(OptionParams, ABC):
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
+    def plot_payoff(
+            self,
+            x_range: tuple[float, float] | None = None,
+            ) -> Tuple[matplotlib.figure.Figure, Any]:
+        """
+        Plot the option's payoff at expiry, alongside key data such as breakeven, current spot price, strike and P&L.
+
+        Parameters
+        -----------
+        x_range : tuple[float, float] or None, default None.
+            The minimum and maximum spot prices to be displayed. If None is passed, the values will be autocalculated.
+
+        Raises
+        -----------
+        MissingParameterException
+            Raised if the option's premium or direction is not defined.
+
+        Returns
+        -----------
+        fix, ax : Tuple[matplotlib.figure.Figure, Any]
+            A tuple containing a matplotlib Figure and Axes object.
+        """
+
+        if (not self.premium) or (not self.direction):
+            raise MissingParameterException("The option's premium and direction must to be defined")
+
+        if x_range is not None:
+            x_lower = x_range[0]
+            x_upper = x_range[1]
+        else:
+            x_lower = self.k * PLOT_LOWER_THRESHOLD_MULTIPLIER
+            x_upper = self.k * PLOT_UPPER_THRESHOLD_MULTIPLIER
+
+        spot_prices = np.linspace(x_lower, x_upper, 100)
+
+        if self.option_type == OptionType.Call:
+            payoff = np.maximum(spot_prices - self.k, 0)
+            breakeven = self.k + self.premium
+        else:
+            payoff = np.maximum(self.k - spot_prices, 0)
+            breakeven = self.k - self.premium
+
+        payoff = payoff * -1 if self.direction == Direction.Short else payoff
+        pnl = payoff - self.premium if self.direction == Direction.Long else payoff + self.premium
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Plot payoff and P&L
+        ax.axhline(0, color="black", linewidth=PLOT_LINE_WIDTH, alpha=0.7) # 0-line
+        ax.grid(True, alpha=0.3, linestyle='--', linewidth=PLOT_LINE_WIDTH)
+
+        # Indicator lines
+        ax.axvline(self.s,
+                   color="orange",
+                   linestyle=INDICATOR_LINE_LINESTYLE,
+                   alpha=INDICATOR_LINE_ALPHA,
+                   linewidth=INDICATOR_LINE_LINEWIDTH,
+                   label=f"Current Spot: {self.s:.2f}")
+
+        ax.axvline(self.k,
+                   color="red",
+                   linestyle=INDICATOR_LINE_LINESTYLE,
+                   alpha=INDICATOR_LINE_ALPHA,
+                   linewidth=INDICATOR_LINE_LINEWIDTH,
+                   label=f'Strike: {self.k:.2f}')
+
+        if x_lower <= breakeven <= x_upper:
+            ax.axvline(breakeven,
+                       color="purple",
+                       linestyle=INDICATOR_LINE_LINESTYLE,
+                       alpha=INDICATOR_LINE_ALPHA,
+                       linewidth=INDICATOR_LINE_LINEWIDTH,
+                       label=f"Breakeven: {breakeven:.2f}")
+
+        # Payoff & P&L lines
+        ax.plot(spot_prices, payoff, linewidth=1, color="steelblue", label="Option payoff at expiry", linestyle="--")
+        ax.plot(spot_prices, pnl, linewidth=1, color="black",label="Profit & Loss")
+    
+        ax.set_xlabel("Spot Price at Expiry", fontsize=PLOT_FONT_SIZE_MAIN, fontweight=PLOT_FONT_WEIGHT_MAIN)
+        ax.set_ylabel("Profit & Loss", fontsize=PLOT_FONT_SIZE_MAIN, fontweight=PLOT_FONT_WEIGHT_MAIN)
+
+        direction = self.direction.name if isinstance(self.direction, Direction) else self.direction
+        option_type = self.option_type.name if isinstance(self.option_type, OptionType) else self.option_type
+        title = f"{direction} {option_type} option payoff at expiry"
+
+        ax.set_title(title, fontsize=PLOT_FONT_SIZE_MAIN, fontweight=PLOT_FONT_WEIGHT_MAIN, pad=15)
+        ax.legend(fontsize=PLOT_FONT_SIZE_LEGEND, loc="best")
+
+        plt.tight_layout()
+        plt.show()
+
+        return fig, ax
+
     @abstractmethod
     def intrinsic_value_variable(self, s: float | None = None, k: float | None = None) -> float:
         """
@@ -292,7 +403,8 @@ class OptionBase(OptionParams, ABC):
             raise MissingParameterException("The option's premium must be defined.")
 
     @abstractmethod
-    def profit_at_expiry_variable(self, s: float | None = None, premium: float | None = None, transaction_costs: float | None = None) -> float:
+    def profit_at_expiry_variable(self, s: float | None = None,
+                                  premium: float | None = None, transaction_costs: float | None = None) -> float:
         """
         Return the profit or loss of an option, regardless of exercise type, at expiry.
         This method takes several inputs, allowing for multiple calculations with different values,
@@ -386,4 +498,3 @@ class OptionBase(OptionParams, ABC):
         float
             The strike price where the option trades at-the-forward.
         """
-        return self.s * np.exp(self.b * self.t)

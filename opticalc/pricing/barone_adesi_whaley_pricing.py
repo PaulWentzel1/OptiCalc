@@ -3,8 +3,8 @@ from scipy.stats import norm  # type: ignore
 
 from opticalc.core.enums import OptionType
 from opticalc.pricing.base import PricingBase
+from opticalc.utils.constants import APPROXIMATION_ITERATIONS, APPROXIMATION_THRESHOLD
 from opticalc.utils.exceptions import InvalidOptionTypeException
-
 
 class BaroneAdesiWhaleyPricing(PricingBase):
     """
@@ -39,7 +39,8 @@ class BaroneAdesiWhaleyPricing(PricingBase):
         d1 = (np.log(si / self.k) + (self.b + self.sigma ** 2 / 2) * self.t) / (self.sigma * np.sqrt(self.t))
         q2 = (-(n - 1) + np.sqrt((n - 1) ** 2 + 4 * k)) / 2
         lhs: float = si - self.k
-        rhs: float = (_parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b, self.sigma, OptionType.Call) + (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1)) * si / q2)
+        rhs: float = (_parameterized_cost_of_carry_black_scholes(si, self.k, self.t, self.r, self.b,
+                                                                 self.sigma, OptionType.Call) + (1 - np.exp((self.b - self.r) * self.t) * norm.cdf(d1)) * si / q2)
         bi = (np.exp((self.b - self.r) * self.t) * norm.cdf(d1) * (1 - 1 / q2)
               + (1 - np.exp((self.b - self.r) * self.t) * norm.pdf(d1) / (self.sigma * np.sqrt(self.t))) / q2)
 
@@ -112,7 +113,9 @@ class BaroneAdesiWhaleyPricing(PricingBase):
 
         return si
 
-    def _barone_adesi_whaley_call(self, tolerance: float = 1e-10, max_iterations: int = 250) -> float:
+    @PricingBase.american_only
+    def barone_adesi_whaley_call(self, tolerance: float = APPROXIMATION_THRESHOLD,
+                                 max_iterations: int = APPROXIMATION_ITERATIONS) -> float:
         """
         Return the theoretical value of a call option using the Barone-Adesi and Whaley approximation method.
 
@@ -146,7 +149,8 @@ class BaroneAdesiWhaleyPricing(PricingBase):
             else:
                 return max(self.s - self.k, 0)
 
-    def _barone_adesi_whaley_put(self, tolerance: float = 1e-10, max_iterations: int = 250) -> float:
+    def barone_adesi_whaley_put(self, tolerance: float = APPROXIMATION_THRESHOLD,
+                                max_iterations: int = APPROXIMATION_ITERATIONS) -> float:
         """
         Return the theoretical value of a put option using the Barone-Adesi and Whaley approximation method.
 
@@ -178,6 +182,7 @@ class BaroneAdesiWhaleyPricing(PricingBase):
 
             return max(self.k - self.s, 0)
 
+    @PricingBase.american_only
     def barone_adesi_whaley(self) -> float:
         """
         Return the theoretical value of an option using the Barone-Adesi and Whaley approximation method.
@@ -197,10 +202,10 @@ class BaroneAdesiWhaleyPricing(PricingBase):
         """
 
         if self.option_type == OptionType.Call:
-            return self._barone_adesi_whaley_call()
+            return self.barone_adesi_whaley_call()
 
         elif self.option_type == OptionType.Put:
-            return self._barone_adesi_whaley_put()
+            return self.barone_adesi_whaley_put()
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 

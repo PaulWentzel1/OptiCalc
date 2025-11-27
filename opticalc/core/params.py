@@ -1,7 +1,10 @@
 from dataclasses import dataclass, field
 
+import numpy as np
+
 from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 from opticalc.utils.exceptions import MissingParameterException
+
 
 @dataclass
 class OptionParams:
@@ -11,7 +14,8 @@ class OptionParams:
     """
     s: float
     k: float
-    t: float
+    _t: float = field(init=False, repr=False)
+    _exercise_dates: list[float] | None = field(init=False, repr=False)
     r: float
     q: float
     sigma: float
@@ -29,7 +33,7 @@ class OptionParams:
         self,
         s: float,
         k: float,
-        t: float,
+        t: float | list[float],
         r: float,
         q: float,
         sigma: float,
@@ -45,7 +49,6 @@ class OptionParams:
     ) -> None:
         self.s = s
         self.k = k
-        self.t = t
         self.r = r
         self.q = q
         self.sigma = sigma
@@ -58,6 +61,47 @@ class OptionParams:
         self.underlying_type = underlying_type
         self.direction = direction
         self.underlying_contracts = underlying_contracts
+
+        if isinstance(t, (list, tuple)):
+            sorted_dates = sorted(t)
+            self._t = sorted_dates[-1]
+            self._exercise_dates = sorted_dates
+        else:
+
+            self._t = t
+            self._exercise_dates = None
+
+    @property
+    def t(self) -> float:
+        """
+        Returns the time to final maturity. This maintains compatibility with European/American pricers.
+        """
+        return self._t
+
+    @t.setter
+    def t(self, value: float | list[float]) -> None:
+        """
+        Sets the expiry/maturity/exercise dates of the option to a customized value.
+        """
+        exercises = np.asarray(value)
+
+        if exercises.ndim == 0:
+            # Handle Scalar case
+            self._t = float(exercises)
+            self._exercise_dates = None
+        else:
+            exercises.sort()
+            self._exercise_dates = exercises  # type: ignore
+            self._t = float(exercises[-1])
+
+    @property
+    def exercise_dates(self) -> list[float]:
+        """
+        Returns the list of exercise dates. If t was initialized as a scalar, returns a single-item list [t].
+        """
+        if self._exercise_dates is not None:
+            return self._exercise_dates
+        return [self._t]
 
     @property
     def b(self) -> float:
@@ -88,5 +132,3 @@ class OptionParams:
     def reset_b(self) -> None:
         """Reset the cost-of-carry rate b."""
         self._override_b = None
-
-

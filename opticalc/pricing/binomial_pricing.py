@@ -8,21 +8,18 @@ from opticalc.core.enums import ExerciseStyle, OptionType
 
 class BinomialPricing(PricingBase):
     """
-    Calculate the value of american-exercise style options using various implementations of the Binomial Tree model.
+    Calculate the value of options using various implementations of the Binomial Tree model.
     """
-    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
+    @PricingBase._exercises_only([ExerciseStyle.American, ExerciseStyle.European, ExerciseStyle.Bermuda])
     def universal_binomial_tree(self, up_factor: float, down_factor: float, p: float, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, where inputs such as the up- and
         down-factors can be changed. This binomial tree serves as the template for other binomial pricing models like
         Cox-Ross-Rubenstein, Cox-Ross-Rubenstein with drift, Rendleman-Bartter, Leisen-Reimer, Jarrow-Rudd,
-        Jarrow-Rudd risk neutral and Tian.
+        Jarrow-Rudd risk neutral and Tian. The model supports all exercises.
 
         Parameters
         -----------
-        n : int
-            The amount of steps in the binomial tree.
-
         up_factor : float
             Move up multiplier.
 
@@ -31,6 +28,9 @@ class BinomialPricing(PricingBase):
 
         p : float
             Move up probability, (Move down probability is 1 - p)
+
+        n : int
+            The amount of steps in the binomial tree.
 
         Raises
         -----------
@@ -50,24 +50,20 @@ class BinomialPricing(PricingBase):
             down_factor = 1 / up_factor
 
         Rendleman-Bartter:
-
             p = (np.exp(b * dt) - down_factor) / (up_factor - down_factor)
             up_factor = np.exp((b - 0.5 * self.sigma**2) * dt + self.sigma * np.sqrt(dt))
             down_factor = np.exp((b - 0.5 * self.sigma**2) * dt - self.sigma * np.sqrt(dt))
 
         Leisen-Reimer:
-
             p = self._h(self.d2, n)
             up_factor = np.exp(b * dt) * (h(self.d1) / h(self.d2))
             down_factor = ( (np.exp(b * dt) - p * up_factor) / (1 - p))
 
         Jarrow-Rudd:
-
             p = 0.5
             up_factor = np.exp(b - self.sigma ** 2 / 2 ) * dt + self.sigma * np.sqrt(dt)
             down_factor = np.exp( (b - self.sigma ** 2 / 2)* dt - self.sigma * np.sqrt(dt)
         """
-
         if n <= 0:
             raise ValueError("The number of steps must be positive")
 
@@ -76,29 +72,33 @@ class BinomialPricing(PricingBase):
 
         dt = self.t / n
 
-        underlying_price = np.zeros(n + 1)
-        for i in range(n + 1):
-            underlying_price[i] = self.s * (up_factor ** (n - i)) * (down_factor ** i)
-        option_values = np.maximum(underlying_price - self.k, 0) if self.option_type == OptionType.Call else np.maximum(self.k - underlying_price, 0)
+        i = np.arange(n + 1)
+        underlying_prices = self.s * (up_factor ** (n - i)) * (down_factor ** i)
+        option_values = np.maximum(0.0, underlying_prices - self.k) if self.option_type == OptionType.Call else np.maximum(self.k - underlying_prices, 0)
 
-        for step in range(n - 1, -1, -1):  # backward induction
-            for i in range(step + 1):
+        for step in range(n - 1, -1, -1):
+            i = np.arange(step + 1)
 
-                # Calculate continuation value (expected discounted future value)
-                continuation_value = cast(float, np.exp(-self.r * dt) * (p * option_values[i] + (1 - p) * option_values[i + 1]))
+            underlying_prices[:step+1] = self.s * (up_factor ** (step - i)) * (down_factor ** i)
+            continuation_value = np.exp(-self.r * dt) * (p * option_values[: step + 1] + (1 - p) * option_values[1: step + 2])
+            intrinsic_value = np.maximum(underlying_prices[: step + 1] - self.k, 0) if self.option_type == OptionType.Call else np.maximum(self.k - underlying_prices[: step + 1], 0)
 
-                if self.exercise_style == ExerciseStyle.European:
-                    option_values[i] = continuation_value  # European option, can only be exercised at maturity
-                else:  # American option
-                    current_price = self.s * (up_factor ** (step - i)) * (down_factor ** i)
+            if self.exercise_style == ExerciseStyle.European:
+                option_values[:step+1] = continuation_value
 
-                    intrinsic_value = np.maximum(current_price - self.k, 0) if self.option_type == OptionType.Call else np.maximum(self.k - current_price, 0)
+            elif self.exercise_style == ExerciseStyle.American:
+                option_values[: step + 1] = np.maximum(continuation_value, intrinsic_value)
 
-                    option_values[i] = np.maximum(continuation_value, intrinsic_value)
+            elif self.exercise_style == ExerciseStyle.Bermuda:
+                time = step * dt
+                if np.any(np.abs(np.array(self.exercise_dates) - time) < 1e-9):
+                    option_values[: step+1] = np.maximum(continuation_value, intrinsic_value)
+                else:
+                    option_values[: step+1] = continuation_value
 
         return cast(float, option_values[0])
 
-    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
+    @PricingBase._exercises_only([ExerciseStyle.American, ExerciseStyle.European, ExerciseStyle.Bermuda])
     def binomial_cox_ross_rubinstein(self, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, based on the Cox-Ross-Rubinstein model.
@@ -125,7 +125,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
-    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
+    @PricingBase._exercises_only([ExerciseStyle.American, ExerciseStyle.European, ExerciseStyle.Bermuda])
     def binomial_cox_ross_rubinstein_drift(self, n: int, drift: float) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, based on a
@@ -155,7 +155,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
-    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
+    @PricingBase._exercises_only([ExerciseStyle.American, ExerciseStyle.European, ExerciseStyle.Bermuda])
     def binomial_rendleman_bartter(self, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, based on the Rendleman-Bartter model.
@@ -184,7 +184,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
-    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
+    @PricingBase._exercises_only([ExerciseStyle.American, ExerciseStyle.European, ExerciseStyle.Bermuda])
     def binomial_leisen_reimer(self, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree, based on the Leisen-Reimer model.
@@ -212,7 +212,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
-    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
+    @PricingBase._exercises_only([ExerciseStyle.American, ExerciseStyle.European, ExerciseStyle.Bermuda])
     def binomial_jarrow_rudd(self, n: int) -> float:
         """
         Return the theoretical value of an option using a binomial tree based on the Jarrow-Rudd model.
@@ -244,7 +244,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
-    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
+    @PricingBase._exercises_only([ExerciseStyle.American, ExerciseStyle.European, ExerciseStyle.Bermuda])
     def binomial_jarrow_rudd_risk_neutral(self, n: int) -> float:
         """
         Return the theoretical value of an option using a binomial tree based on a modified version of the Jarrow-Rudd model.
@@ -269,7 +269,7 @@ class BinomialPricing(PricingBase):
 
         return self.universal_binomial_tree(up_factor, down_factor, p, n)
 
-    @PricingBase.exercises_only([ExerciseStyle.American, ExerciseStyle.European])
+    @PricingBase._exercises_only([ExerciseStyle.American, ExerciseStyle.European, ExerciseStyle.Bermuda])
     def binomial_tian(self, n: int) -> float:
         """
         Return the theoretical value of an option using a risk-neutral binomial tree  based on the Tian (1993) model.

@@ -1,5 +1,5 @@
 
-from opticalc.core.option import Option, EuropeanOption, AmericanOption
+from opticalc.core.option import Option, EuropeanOption, AmericanOption, BermudaOption
 
 
 class Strategy:

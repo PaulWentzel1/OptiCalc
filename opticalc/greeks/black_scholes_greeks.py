@@ -1552,4 +1552,3 @@ class BlackScholesGreeks(PricingBase):
             return self.s * self.t * np.exp((self.b - self.r) * self.t) * norm.cdf(-self.d1_cost_of_carry(self.b))
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
-

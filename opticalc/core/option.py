@@ -2,7 +2,9 @@ from opticalc.core.vanilla_base import VanillaOptionBase
 from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
 from opticalc.core.american_option import AmericanOption
+from opticalc.core.bermuda_option import BermudaOption
 from opticalc.core.european_option import EuropeanOption
+
 
 from opticalc.utils.exceptions import InvalidExerciseException
 
@@ -63,7 +65,7 @@ class Option(VanillaOptionBase):
             cls,
             s: float,
             k: float,
-            t: float,
+            t: float | list[float],
             r: float,
             q: float,
             sigma: float,
@@ -76,7 +78,7 @@ class Option(VanillaOptionBase):
             underlying_type: Underlying | str | None = None,
             direction: Direction | str | None = None,
             underlying_contracts: int | None = None,
-            ) -> AmericanOption | EuropeanOption:
+            ) -> AmericanOption | EuropeanOption | BermudaOption:
         """
         Return the option subclass (EuropeanOption, AmericanOption etc) based on exercise_style.
 
@@ -129,30 +131,24 @@ class Option(VanillaOptionBase):
                 direction=direction,
                 underlying_contracts=underlying_contracts,
             )
+        elif style_str == "bermuda":
+            return BermudaOption(
+                s=s,
+                k=k,
+                t=t,
+                r=r,
+                q=q,
+                sigma=sigma,
+                option_type=option_type,
+                b=b,
+                rf=rf,
+                premium=premium,
+                transaction_costs=transaction_costs,
+                underlying_type=underlying_type,
+                direction=direction,
+                underlying_contracts=underlying_contracts,
+            )
+
         else:
             raise InvalidExerciseException(f"Invalid input '{exercise_style}'. Valid inputs for exercise_style"
-                                                 f" are: {[element.value for element in ExerciseStyle]}")
-
-    @property
-    def intrinsic_value(self) -> float: ...
-
-    def intrinsic_value_variable(self, s: float | None = None, k: float | None = None) -> float: ...
-
-    @property
-    def extrinsic_value(self) -> float: ...
-
-    def profit_at_expiry_variable(self, s: float | None = None,
-                                  premium: float | None = None,
-                                  transaction_costs: float | None = None) -> float: ...
-
-    @property
-    def moneyness(self) -> str: ...
-
-    @property
-    def at_the_forward(self) -> bool: ...
-
-    @property
-    def at_the_forward_underlying(self) -> float: ...
-
-    @property
-    def at_the_forward_strike(self) -> float: ...
+                                           f" are: {[element.value for element in ExerciseStyle]}")

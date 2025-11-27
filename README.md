@@ -19,7 +19,7 @@ pip install opticalc
 -->
 ## Features
 ### High-level Option Classes
-Currently 3 option classes (```EuropeanOption```, ```AmericanOption```, ```Option```) are available for use.
+Currently 4 option classes (```EuropeanOption```, ```AmericanOption```, ```BermudaOption``` and ```Option```) are available for use.
 
 These option classes offer flexibility with their attributes, from simple, minimal inputs for quick calculations to more complex ones:
 ```py

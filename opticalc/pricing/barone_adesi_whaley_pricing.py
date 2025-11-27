@@ -6,6 +6,7 @@ from opticalc.pricing.base import PricingBase
 from opticalc.utils.constants import APPROXIMATION_ITERATIONS, APPROXIMATION_THRESHOLD
 from opticalc.utils.exceptions import InvalidOptionTypeException
 
+
 class BaroneAdesiWhaleyPricing(PricingBase):
     """
     Approximate the value of american-exercise style options using the Barone-Adesi & Whaley model .
@@ -113,7 +114,7 @@ class BaroneAdesiWhaleyPricing(PricingBase):
 
         return si
 
-    @PricingBase.american_only
+    @PricingBase._american_only
     def barone_adesi_whaley_call(self, tolerance: float = APPROXIMATION_THRESHOLD,
                                  max_iterations: int = APPROXIMATION_ITERATIONS) -> float:
         """
@@ -149,6 +150,7 @@ class BaroneAdesiWhaleyPricing(PricingBase):
             else:
                 return max(self.s - self.k, 0)
 
+    @PricingBase._american_only
     def barone_adesi_whaley_put(self, tolerance: float = APPROXIMATION_THRESHOLD,
                                 max_iterations: int = APPROXIMATION_ITERATIONS) -> float:
         """
@@ -182,7 +184,7 @@ class BaroneAdesiWhaleyPricing(PricingBase):
 
             return max(self.k - self.s, 0)
 
-    @PricingBase.american_only
+    @PricingBase._american_only
     def barone_adesi_whaley(self) -> float:
         """
         Return the theoretical value of an option using the Barone-Adesi and Whaley approximation method.

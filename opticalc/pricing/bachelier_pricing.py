@@ -11,7 +11,7 @@ class BachelierPricing(PricingBase):
     Calculate the value of european-exercise style options using the Bachelier model .
     """
 
-    @PricingBase.european_only
+    @PricingBase._european_only
     def bachelier(self) -> float:
         """
         Return the theoretical value of a european option using the Bachelier model.
@@ -38,7 +38,7 @@ class BachelierPricing(PricingBase):
         else:
             raise InvalidOptionTypeException(f"The Option type {self.option_type} is not valid.")
 
-    @PricingBase.european_only
+    @PricingBase._european_only
     def bachelier_modified(self) -> float:
         """
         Return the theoretical value of a european option using the modified Bachelier model.

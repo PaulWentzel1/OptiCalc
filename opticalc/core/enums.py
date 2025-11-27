@@ -31,12 +31,21 @@ class Underlying(Enum):
     Swap = "swap"
 
 
+class Moneyness(Enum):
+    """Stage of moneyness."""
+    OTM = "out of the money"
+    ATM = "at the money"
+    ATF = "at the forward"
+    ITM = "in the money"
+
+
 class PricingClass(Enum):
     BachelierPricing = "bachelier"
     BaroneAdesiWhaleyPricing = "barone_adesi_whaley"
     BinomialPricing = "binomial"
     BjerksundStenslandPricing = "bjerksund_stensland"
     BlackScholesPricing = "black_scholes"
+
 
 class Model(Enum):
     Bachelier = "bachelier"

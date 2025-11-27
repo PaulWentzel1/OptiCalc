@@ -1,4 +1,4 @@
-from typing import Callable, TypeVar, cast, Any, ParamSpec
+from typing import TypeVar, cast, Any, ParamSpec
 from collections.abc import Callable
 
 import numpy as np
@@ -12,12 +12,13 @@ T = TypeVar('T', bound='PricingBase')
 P = ParamSpec('P')
 R = TypeVar('R')
 
+
 class PricingBase(OptionParams):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
 
     @staticmethod
-    def european_only(func: Callable[P, R]) -> Callable[P, R]:
+    def _european_only(func: Callable[P, R]) -> Callable[P, R]:
         """Decorator used to denote pricing models or methods only applicable to european exercise-style option."""
         def wrapper(self: T, *args: Any, **kwargs: Any) -> R:  # type: ignore
             if not self.exercise_style == ExerciseStyle.European:
@@ -31,7 +32,7 @@ class PricingBase(OptionParams):
         return cast(Callable[..., R], wrapper)
 
     @staticmethod
-    def american_only(func: Callable[P, R]) -> Callable[P, R]:
+    def _american_only(func: Callable[P, R]) -> Callable[P, R]:
         """Decorator used to denote pricing models or methods only applicable to american exercise-style option."""
         def wrapper(self: T, *args: Any, **kwargs: Any) -> R:  # type: ignore
             if not self.exercise_style == ExerciseStyle.American:
@@ -45,14 +46,14 @@ class PricingBase(OptionParams):
         return cast(Callable[..., R], wrapper)
 
     @staticmethod
-    def exercises_only(exercises_allowed: list[ExerciseStyle]):
+    def _exercises_only(exercises_allowed: list[ExerciseStyle]):  # type: ignore
         """Decorator used to denote pricing models or methods only applicable to specificed exercise-style options."""
         @staticmethod
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             def wrapper(self: T, *args: Any, **kwargs: Any) -> R:  # type: ignore
-                if not self.exercise_style in exercises_allowed:
+                if self.exercise_style not in exercises_allowed:
                     exercise = (self.exercise_style.value if isinstance(self.exercise_style, ExerciseStyle)
-                            else self.exercise_style)
+                                else self.exercise_style)
                     reformat_exercise_list = list(map(lambda x: x.value, exercises_allowed))
 
                     raise UnsupportedModelException(
@@ -61,24 +62,6 @@ class PricingBase(OptionParams):
                 return func(self, *args, **kwargs)  # type: ignore
             return cast(Callable[..., R], wrapper)
         return decorator
-
-    def method_class(self, method_name: str) -> str | None:
-        """
-        Return the class in which a specific method was defined. Used to verify pricing models on a group/class-basis.
-
-        Parameters
-        -----------
-        method_name : str
-            Name of the method to verify.
-
-        Returns:
-            The class where the method is defined
-        """
-
-        for base_class in self.__class__.__mro__:
-            if method_name in base_class.__dict__:
-                return base_class.__name__
-        return None
 
     @property
     def d1(self) -> float:

@@ -12,6 +12,7 @@ from opticalc.pricing.black_scholes_pricing import BlackScholesPricing
 
 from opticalc.utils.constants import CALL_PUT_PARITY_THRESHOLD
 
+
 class EuropeanOption(VanillaOptionBase, BlackScholesPricing, BinomialPricing, BachelierPricing, BlackScholesGreeks):
     """
     A European-exercise style option. European options can only be exercised at the end of their maturity, contrary to
@@ -54,10 +55,10 @@ class EuropeanOption(VanillaOptionBase, BlackScholesPricing, BinomialPricing, Ba
     transaction_costs : float or None, default to None
         The transaction costs associated with trading the option.
 
-    underlying_type: OptionUnderlying, str or None, default None.
+    underlying_type: Underlying, str or None, default None.
         The type of underlying asset the option tracks.
 
-    direction: OptionDirection, str or None, default None.
+    direction: Direction, str or None, default None.
         The direction of the option, if it is sold or bought.
     """
     def __init__(
@@ -96,38 +97,6 @@ class EuropeanOption(VanillaOptionBase, BlackScholesPricing, BinomialPricing, Ba
             )
 
     @property
-    def intrinsic_value(self) -> float:
-        return super().intrinsic_value
-
-    def intrinsic_value_variable(self, s: float | None = None, k: float | None = None) -> float:
-        return super().intrinsic_value_variable(s, k)
-
-    @property
-    def extrinsic_value(self) -> float:
-        return super().extrinsic_value
-
-    def profit_at_expiry_variable(self, s: float | None = None,
-                                  premium: float | None = None,
-                                  transaction_costs: float | None = None) -> float:
-        return super().profit_at_expiry_variable(s, premium, transaction_costs)
-
-    @property
-    def moneyness(self) -> str:
-        return super().moneyness
-
-    @property
-    def at_the_forward(self) -> bool:
-        return super().at_the_forward
-
-    @property
-    def at_the_forward_underlying(self) -> float:
-        return super().at_the_forward_underlying
-
-    @property
-    def at_the_forward_strike(self) -> float:
-        return super().at_the_forward_strike
-
-    @property
     def call_put_parity(self) -> float:
         """
         Return value of the opposite option (Inverse option type) needed for the Call-Put parity to be true.
@@ -139,7 +108,6 @@ class EuropeanOption(VanillaOptionBase, BlackScholesPricing, BinomialPricing, Ba
         float
             The value of the identical option with opposite option type.
         """
-
         if self.option_type == OptionType.Call:
             call_value = self.black_scholes_adaptive()
             put_value = (self.k * np.exp(-self.r * self.t) * norm.cdf(-self.d2) - self.s

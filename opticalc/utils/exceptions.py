@@ -22,6 +22,7 @@ class InvalidDirectionException(Exception):
     """Invalid direction."""
     ...
 
+
 class MissingParameterException(ValueError):
     """Missing a needed parameter."""
     ...

@@ -1,15 +1,13 @@
 from opticalc.core.vanilla_base import VanillaOptionBase
 from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
-from opticalc.pricing.bjerksund_stensland_pricing import BjerksundStenslandPricing
 from opticalc.pricing.binomial_pricing import BinomialPricing
-from opticalc.pricing.barone_adesi_whaley_pricing import BaroneAdesiWhaleyPricing
 
 
-class AmericanOption(VanillaOptionBase, BjerksundStenslandPricing, BinomialPricing, BaroneAdesiWhaleyPricing):
+class BermudaOption(VanillaOptionBase, BinomialPricing):
     """
-    An American-exercise style option. American options can be exercised at any point until the end of their maturity,
-    contrary to European or Bermuda options.
+    A Bermuda-exercise style option. Bermuda options can be exercised at specified points until the end of their maturity,
+    placing them between American and European Options.
     The class represents a financial option (Gives the holder the right, but not the obligation, to buy/sell the specific
     underlying asset).
 
@@ -21,8 +19,8 @@ class AmericanOption(VanillaOptionBase, BjerksundStenslandPricing, BinomialPrici
     k : float
         The strike of the option.
 
-    t : float
-        The time left until the option expires.
+    t : list[float]
+        The specified exercise dates of the Bermuda Option.
 
     r : float
         The risk-free rate.
@@ -58,7 +56,7 @@ class AmericanOption(VanillaOptionBase, BjerksundStenslandPricing, BinomialPrici
         self,
         s: float,
         k: float,
-        t: float,
+        t: list[float],
         r: float,
         q: float,
         sigma: float,
@@ -79,7 +77,7 @@ class AmericanOption(VanillaOptionBase, BjerksundStenslandPricing, BinomialPrici
             q=q,
             sigma=sigma,
             option_type=option_type,
-            exercise_style=ExerciseStyle.American,
+            exercise_style=ExerciseStyle.Bermuda,
             b=b,
             rf=rf,
             premium=premium,

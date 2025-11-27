@@ -48,7 +48,7 @@ dev = [
 [project.urls]
 Repository = "https://github.com/PaulWentzel1/OptiCalc.git"
 Issues = "https://github.com/PaulWentzel1/OptiCalc/issues"
-#Changelog = "https://github.com/PaulWentzel1/OptiCalc/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/PaulWentzel1/OptiCalc/blob/master/CHANGELOG.md"
 
 [build-system]
 requires = ["setuptools"]

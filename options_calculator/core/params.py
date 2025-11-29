@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
-from opticalc.utils.exceptions import MissingParameterException
+from options_calculator.core.enums import Direction, ExerciseStyle, OptionType, Underlying
+from options_calculator.utils.exceptions import MissingParameterException
 
 
 @dataclass

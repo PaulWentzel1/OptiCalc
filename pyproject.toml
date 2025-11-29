@@ -1,6 +1,8 @@
 [project]
 name = "options_calculator"
 version = "0.1.2"
+name = "options_calculator"
+version = "0.1.2"
 description = "An intuitive and versatile options library."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}

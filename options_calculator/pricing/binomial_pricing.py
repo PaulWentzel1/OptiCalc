@@ -2,8 +2,8 @@ from typing import cast
 
 import numpy as np
 
-from opticalc.pricing.base import PricingBase
-from opticalc.core.enums import ExerciseStyle, OptionType
+from options_calculator.pricing.base import PricingBase
+from options_calculator.core.enums import ExerciseStyle, OptionType
 
 
 class BinomialPricing(PricingBase):

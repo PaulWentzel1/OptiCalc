@@ -1,5 +1,5 @@
-from opticalc.core.enums import Model
-from opticalc.utils.exceptions import MissingParameterException
+from options_calculator.core.enums import Model
+from options_calculator.utils.exceptions import MissingParameterException
 
 
 def convert_model(model: Model | str) -> Model:

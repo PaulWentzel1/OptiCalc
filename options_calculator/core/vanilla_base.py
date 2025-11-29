@@ -5,9 +5,9 @@ from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 import numpy as np
 
-from opticalc.core.enums import Direction, ExerciseStyle, Moneyness, OptionType, Underlying
-from opticalc.core.params import OptionParams
-from opticalc.utils.constants import (ATM_THRESHOLD,
+from options_calculator.core.enums import Direction, ExerciseStyle, Moneyness, OptionType, Underlying
+from options_calculator.core.params import OptionParams
+from options_calculator.utils.constants import (ATM_THRESHOLD,
                                       AT_FORWARD_THRESHOLD,
                                       PLOT_LOWER_THRESHOLD_MULTIPLIER,
                                       PLOT_UPPER_THRESHOLD_MULTIPLIER,
@@ -18,7 +18,7 @@ from opticalc.utils.constants import (ATM_THRESHOLD,
                                       PLOT_FONT_WEIGHT_MAIN,
                                       PLOT_FONT_SIZE_LEGEND,
                                       PLOT_LINE_WIDTH)
-from opticalc.utils.exceptions import (InvalidDirectionException,
+from options_calculator.utils.exceptions import (InvalidDirectionException,
                                        InvalidExerciseException,
                                        InvalidOptionTypeException,
                                        InvalidUnderlyingException,

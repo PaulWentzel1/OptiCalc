@@ -1,9 +1,9 @@
-from opticalc.core.vanilla_base import VanillaOptionBase
-from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
+from options_calculator.core.vanilla_base import VanillaOptionBase
+from options_calculator.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
-from opticalc.pricing.bjerksund_stensland_pricing import BjerksundStenslandPricing
-from opticalc.pricing.binomial_pricing import BinomialPricing
-from opticalc.pricing.barone_adesi_whaley_pricing import BaroneAdesiWhaleyPricing
+from options_calculator.pricing.bjerksund_stensland_pricing import BjerksundStenslandPricing
+from options_calculator.pricing.binomial_pricing import BinomialPricing
+from options_calculator.pricing.barone_adesi_whaley_pricing import BaroneAdesiWhaleyPricing
 
 
 class AmericanOption(VanillaOptionBase, BjerksundStenslandPricing, BinomialPricing, BaroneAdesiWhaleyPricing):

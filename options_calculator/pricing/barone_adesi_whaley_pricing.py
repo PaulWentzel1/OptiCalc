@@ -1,10 +1,10 @@
 import numpy as np
 from scipy.stats import norm  # type: ignore
 
-from opticalc.core.enums import OptionType
-from opticalc.pricing.base import PricingBase
-from opticalc.utils.constants import APPROXIMATION_ITERATIONS, APPROXIMATION_THRESHOLD
-from opticalc.utils.exceptions import InvalidOptionTypeException
+from options_calculator.core.enums import OptionType
+from options_calculator.pricing.base import PricingBase
+from options_calculator.utils.constants import APPROXIMATION_ITERATIONS, APPROXIMATION_THRESHOLD
+from options_calculator.utils.exceptions import InvalidOptionTypeException
 
 
 class BaroneAdesiWhaleyPricing(PricingBase):

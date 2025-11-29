@@ -1,5 +1,5 @@
-from opticalc.pricing.base import PricingBase
-from opticalc.utils.exceptions import MissingParameterException
+from options_calculator.pricing.base import PricingBase
+from options_calculator.utils.exceptions import MissingParameterException
 
 
 class BlackScholesPricing(PricingBase):

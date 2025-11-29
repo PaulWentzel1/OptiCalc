@@ -1,12 +1,12 @@
-from opticalc.core.vanilla_base import VanillaOptionBase
-from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
+from options_calculator.core.vanilla_base import VanillaOptionBase
+from options_calculator.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
-from opticalc.core.american_option import AmericanOption
-from opticalc.core.bermuda_option import BermudaOption
-from opticalc.core.european_option import EuropeanOption
+from options_calculator.core.american_option import AmericanOption
+from options_calculator.core.bermuda_option import BermudaOption
+from options_calculator.core.european_option import EuropeanOption
 
 
-from opticalc.utils.exceptions import InvalidExerciseException
+from options_calculator.utils.exceptions import InvalidExerciseException
 
 
 class Option(VanillaOptionBase):

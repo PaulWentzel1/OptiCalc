@@ -1,16 +1,16 @@
 import numpy as np
 from scipy.stats import norm  # type: ignore
 
-from opticalc.core.vanilla_base import VanillaOptionBase
-from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
+from options_calculator.core.vanilla_base import VanillaOptionBase
+from options_calculator.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
-from opticalc.greeks.black_scholes_greeks import BlackScholesGreeks
+from options_calculator.greeks.black_scholes_greeks import BlackScholesGreeks
 
-from opticalc.pricing.bachelier_pricing import BachelierPricing
-from opticalc.pricing.binomial_pricing import BinomialPricing
-from opticalc.pricing.black_scholes_pricing import BlackScholesPricing
+from options_calculator.pricing.bachelier_pricing import BachelierPricing
+from options_calculator.pricing.binomial_pricing import BinomialPricing
+from options_calculator.pricing.black_scholes_pricing import BlackScholesPricing
 
-from opticalc.utils.constants import CALL_PUT_PARITY_THRESHOLD
+from options_calculator.utils.constants import CALL_PUT_PARITY_THRESHOLD
 
 
 class EuropeanOption(VanillaOptionBase, BlackScholesPricing, BinomialPricing, BachelierPricing, BlackScholesGreeks):

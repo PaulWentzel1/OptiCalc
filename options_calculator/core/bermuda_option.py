@@ -1,7 +1,7 @@
-from opticalc.core.vanilla_base import VanillaOptionBase
-from opticalc.core.enums import Direction, ExerciseStyle, OptionType, Underlying
+from options_calculator.core.vanilla_base import VanillaOptionBase
+from options_calculator.core.enums import Direction, ExerciseStyle, OptionType, Underlying
 
-from opticalc.pricing.binomial_pricing import BinomialPricing
+from options_calculator.pricing.binomial_pricing import BinomialPricing
 
 
 class BermudaOption(VanillaOptionBase, BinomialPricing):

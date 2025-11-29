@@ -4,9 +4,9 @@ from collections.abc import Callable
 import numpy as np
 from scipy.stats import norm  # type: ignore
 
-from opticalc.core.enums import OptionType, ExerciseStyle
-from opticalc.core.params import OptionParams
-from opticalc.utils.exceptions import InvalidOptionTypeException, UnsupportedModelException
+from options_calculator.core.enums import OptionType, ExerciseStyle
+from options_calculator.core.params import OptionParams
+from options_calculator.utils.exceptions import InvalidOptionTypeException, UnsupportedModelException
 
 T = TypeVar('T', bound='PricingBase')
 P = ParamSpec('P')

@@ -149,41 +149,23 @@ As of now, OptiCalc offers 5 different pricing classes, with 15 pricing methods 
 | **Black-76** | ✅ | ❌ | ❌ | Analytical ||
 | **Garman-Kohlhagen** | ✅ | ❌ | ❌ | Analytical ||
 | **Adaptive Black-Scholes** | ✅ | ❌ | ❌ | Analytical ||
-| **Bachelier** | ✅ | ❌ | ❌ | Analytical ||
-| ... | ... | ... | ... | ... | ... |
-| **Cox-Ross-Rubinstein** | ✅ | ✅ | ✅ | Numerical (Tree) |
-| **Bjerksund-Stensland** | ❌ | ✅ | ❌ | Analytical (Approx) |
-| **Barone-Adesi & Whaley** | ❌ | ✅ | ❌ | Analytical (Approx) |
 
-Todo remove
-- **Black Scholes** (European options)
-    - Black-Scholes
-    - Black-Scholes-Merton
-    - Black-76
-    - Garman Kohlhagen
-    - Adaptive Black-Scholes
+| **Classic Bachelier** | ✅ | ❌ | ❌ | Analytical ||
+| **Modified Bachelier** | ✅ | ❌ | ❌ | Analytical ||
 
-- **Binomial Trees** (European, Bermuda and American options)
-    - Cox-Ross-Rubinstein
-    - Cox-Ross-Rubinstein with drift
-    - Rendleman-Bartter
-    - Leisen-Reimer
-    - Jarrow-Rudd
-    - Jarrow-Rudd with risk neutrality
-    - Tian
-    - Universal binomial tree
+| **Barone-Adesi & Whaley** | ❌ | ✅ | ❌ | Analytical (Approx) ||
+| **Bjerksund-Stensland 1993** | ❌ | ✅ | ❌ | Analytical (Approx) ||
+| **Bjerksund-Stensland 2002** | ❌ | ✅ | ❌ | Analytical (Approx) ||
+| **Combined Bjerksund-Stensland 1993 & 2002** | ❌ | ✅ | ❌ | Analytical (Approx) ||
+| **Cox-Ross-Rubinstein** | ✅ | ✅ | ✅ | Numerical (Tree) ||
+| **Cox-Ross-Rubinstein with drift** | ✅ | ✅ | ✅ | Numerical (Tree) ||
+| **Rendleman-Bartter** | ✅ | ✅ | ✅ | Numerical (Tree) ||
+| **Leisen-Reimer** | ✅ | ✅ | ✅ | Numerical (Tree) ||
+| **Jarrow-Rudd** | ✅ | ✅ | ✅ | Numerical (Tree) ||
+| **Jarrow-Rudd with risk neutrality** | ✅ | ✅ | ✅ | Numerical (Tree) ||
+| **Tian** | ✅ | ✅ | ✅ | Numerical (Tree) ||
+| **Universal Binomial Tree** | ✅ | ✅ | ✅ | Numerical (Tree) ||
 
-- **Bjerksund-Stensland** (American options)
-    - Bjerksund-Stensland 1993 model
-    - Bjerksund-Stensland 2002 model
-    - Combined Bjerksund-Stensland 1993 and 2002 model
-
-- **Barone-Adesi and Whaley** (American options)
-    - Barone-Adesi and Whaley model
-
-- **Bachelier** (European options)
-    - Classic Bachelier model
-    - Modified Bachelier model ##
 ## License
 OptiCalc is released under a **[MIT License](LICENSE)**
 

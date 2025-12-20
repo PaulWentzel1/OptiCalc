@@ -5,6 +5,7 @@
 The core idea behind OptiCalc is to allow for complex calculations with a simple interface, filling the gap between simple End-user developed applications (EUDAs) and more advanced libraries/modules such as QuantLib. OptiCalc is not necessarily intended for speed or low-level complexity. For that, QuantLib is much more suitable.
 ## Table of Contents
 - [Getting started with OptiCalc](#getting-started-with-opticalc)
+- [Documentation](#documentation)
 - [Features](#features)
 - [License](#license)
 - [Dependencies](#dependencies)
@@ -20,6 +21,10 @@ pip install options_calculator
 # Via uv
 uv pip install options_calculator
 ```
+## Documentation
+For detailed guides and explainations of OptiCalc's logic, please refer to the documentation in the [docs folder](./docs/):
+
+- [01. Getting Started](./docs/01_getting_started.md): Installing the library and initializing your first Option objects.
 
 ## Features
 ### High-level Option Classes
@@ -135,6 +140,22 @@ print(new_option.b) # Output: 0.00
 ### Pricers
 As of now, OptiCalc offers 5 different pricing classes, with 15 pricing methods available for european-style options, 12 for american-style options and 8 for bermuda-style options.
 
+### Pricing Model Compatibility
+
+| Model | European exercise | American exercise | Bermuda exercise | Implementation Type | Notes |
+| :--- | :---: | :---: | :---: | :--- |:--- |
+| **Black-Scholes** | ✅ | ❌ | ❌ | Analytical ||
+| **Black-Scholes-Merton** | ✅ | ❌ | ❌ | Analytical ||
+| **Black-76** | ✅ | ❌ | ❌ | Analytical ||
+| **Garman-Kohlhagen** | ✅ | ❌ | ❌ | Analytical ||
+| **Adaptive Black-Scholes** | ✅ | ❌ | ❌ | Analytical ||
+| **Bachelier** | ✅ | ❌ | ❌ | Analytical ||
+| ... | ... | ... | ... | ... | ... |
+| **Cox-Ross-Rubinstein** | ✅ | ✅ | ✅ | Numerical (Tree) |
+| **Bjerksund-Stensland** | ❌ | ✅ | ❌ | Analytical (Approx) |
+| **Barone-Adesi & Whaley** | ❌ | ✅ | ❌ | Analytical (Approx) |
+
+Todo remove
 - **Black Scholes** (European options)
     - Black-Scholes
     - Black-Scholes-Merton
@@ -162,8 +183,7 @@ As of now, OptiCalc offers 5 different pricing classes, with 15 pricing methods 
 
 - **Bachelier** (European options)
     - Classic Bachelier model
-    - Modified Bachelier model
-
+    - Modified Bachelier model ##
 ## License
 OptiCalc is released under a **[MIT License](LICENSE)**
 

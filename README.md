@@ -149,10 +149,8 @@ As of now, OptiCalc offers 5 different pricing classes, with 15 pricing methods 
 | **Black-76** | ✅ | ❌ | ❌ | Analytical ||
 | **Garman-Kohlhagen** | ✅ | ❌ | ❌ | Analytical ||
 | **Adaptive Black-Scholes** | ✅ | ❌ | ❌ | Analytical ||
-
 | **Classic Bachelier** | ✅ | ❌ | ❌ | Analytical ||
 | **Modified Bachelier** | ✅ | ❌ | ❌ | Analytical ||
-
 | **Barone-Adesi & Whaley** | ❌ | ✅ | ❌ | Analytical (Approx) ||
 | **Bjerksund-Stensland 1993** | ❌ | ✅ | ❌ | Analytical (Approx) ||
 | **Bjerksund-Stensland 2002** | ❌ | ✅ | ❌ | Analytical (Approx) ||

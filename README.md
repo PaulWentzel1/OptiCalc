@@ -12,9 +12,15 @@ The core idea behind OptiCalc is to allow for complex calculations with a simple
 
 ## Getting started with OptiCalc
 OptiCalc is available on PyPI and can be installed via
-```sh
+```shell
+# Via PyPI
 pip install options_calculator
 ```
+```sh
+# Via uv
+uv pip install options_calculator
+```
+
 ## Features
 ### High-level Option Classes
 Currently 4 option classes (```EuropeanOption```, ```AmericanOption```, ```BermudaOption``` and ```Option```) are available for use.
